@@ -11,6 +11,8 @@
     "start": "npm --workspace=app run start",
     "test": "npm --workspace=app run test",
     "test:chat": "node app/node_modules/tsx/dist/cli.mjs scripts/test_chat_stream.js",
-    "test:vfs": "node app/node_modules/tsx/dist/cli.mjs scripts/test_vfs_stream.js"
+    "test:vfs": "node app/node_modules/tsx/dist/cli.mjs scripts/test_vfs_stream.js",
+    "bench:density": "node bench/container_density.js",
+    "bench:load": "node app/node_modules/tsx/dist/cli.mjs bench/loadtest.js"
   }
 }

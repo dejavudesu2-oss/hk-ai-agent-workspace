@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "paths": {
+      "@/*": ["./app/src/*"]
+    }
+  },
+  "include": ["app/src/**/*.ts", "app/src/**/*.tsx", "bench/**/*.js", "scripts/**/*.js"],
+  "exclude": ["node_modules", "app/node_modules"]
+}
