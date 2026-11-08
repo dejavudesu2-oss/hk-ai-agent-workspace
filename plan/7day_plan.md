@@ -67,7 +67,7 @@ gantt
 * **投入工時**：10 小時
 * **具體工作內容**：
   1. 打造 **Tier 1 瀏覽器端安全沙盒**：
-     * 採用 Sandboxed Iframe (`sandbox="allow-scripts allow-modals allow-same-origin"`)，免除 COOP/COEP 跨域阻斷 [verified: CodeSandbox Sandpack docs]。
+     * 採用 Sandboxed Iframe (`sandbox="allow-scripts allow-modals allow-forms"`，嚴格剔除 `allow-same-origin` 確保 opaque null origin 隔離父頁面 DOM 與 Cookie)，免除 COOP/COEP 跨域阻斷 [verified: CodeSandbox Sandpack docs]。
      * 在 Iframe 中動態編譯與渲染 React 18 / Tailwind / Lucide 組件，支援即時 DOM 刷新。
   2. 實現 **Tier 2 後端容器接口**：
      * 建立 `/api/sandbox`，模擬或對接本地 Node/Docker 容器執行腳本，提供終端輸出回傳。
@@ -130,7 +130,7 @@ gantt
 * **具體工作內容**：
   1. 租用香港本地平價 VPS（AWS Lightsail HK 2C/4G 或阿里雲香港，月費 \$24 USD）[verified: AWS Lightsail Pricing]。
   2. 執行 `/infra/setup.sh` 一鍵自動化腳本：
-     * 安裝 Docker Engine 及 Google gVisor (`runsc`，使用 `--platform=ptrace` 支援標準 VPS 核心）[verified: gVisor.dev]。
+     * 安裝 Docker Engine 及 Google gVisor (`runsc`，使用現代預設 `--platform=systrap` 支援標準非 KVM 雲主機核心）[verified: gVisor.dev]。
      * 配置 Caddy 反向代理，自動簽發 Let's Encrypt SSL 證書，開啟 WebSocket 支援。
      * 配置 iptables 防火牆出網白名單，徹底阻斷黑客挖礦與惡意掃描。
   3. 運行 Next.js 生產容器並進行全鏈路回歸測試：
