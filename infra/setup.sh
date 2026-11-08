@@ -68,29 +68,28 @@ echo -e "\n${BLUE}>>> Step 3: Installing Google gVisor (runsc sandbox runtime)..
 ARCH=$(uname -m)
 URL="https://storage.googleapis.com/gvisor/releases/release/latest/${ARCH}"
 
-curl -fsSL "${URL}/runsc" -o /usr/local/bin/runsc
+curl -fsSL "${URL}/runsc" -o /tmp/runsc
 curl -fsSL "${URL}/runsc.sha512" -o /tmp/runsc.sha512
 
 # Verify checksum
-cd /tmp
-sed -i "s|runsc|/usr/local/bin/runsc|" /tmp/runsc.sha512
-sha512sum -c /tmp/runsc.sha512 || {
+(cd /tmp && sha512sum -c runsc.sha512) || {
     echo -e "${RED}[ERROR] gVisor checksum verification failed!${NC}"
     exit 1
 }
+mv /tmp/runsc /usr/local/bin/runsc
 chmod a+rx /usr/local/bin/runsc
 echo -e "${GREEN}[OK] gVisor runsc downloaded and verified.${NC}"
 
-# Configure Docker daemon to register runsc with ptrace/systrap platform
+# Configure Docker daemon to register runsc with systrap platform
 # (Works seamlessly on standard VPS without bare-metal KVM requirements)
 echo -e "\n${BLUE}>>> Step 4: Configuring Docker daemon for gVisor...${NC}"
 DAEMON_JSON="/etc/docker/daemon.json"
 mkdir -p /etc/docker
 
 if [ -f "$DAEMON_JSON" ]; then
-    # Merge existing JSON with runsc runtime
+    # Merge existing JSON with runsc runtime safely even if runtimes key is missing
     cp "$DAEMON_JSON" "${DAEMON_JSON}.bak"
-    jq '.runtimes["runsc"] = {
+    jq '(.runtimes //= {}) | .runtimes["runsc"] = {
         "path": "/usr/local/bin/runsc",
         "runtimeArgs": ["--platform=systrap"]
     }' "$DAEMON_JSON" > "${DAEMON_JSON}.tmp" && mv "${DAEMON_JSON}.tmp" "$DAEMON_JSON"

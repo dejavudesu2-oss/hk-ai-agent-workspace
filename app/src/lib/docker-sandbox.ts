@@ -2,6 +2,7 @@ import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 const execAsync = promisify(exec);
 
@@ -65,6 +66,20 @@ export async function executeInGVisor(
   const startTime = Date.now();
   const { command, timeoutMs = RESOURCE_LIMITS.timeoutMs } = options;
 
+  let tempDir: string | null = null;
+  if (options.files && Object.keys(options.files).length > 0) {
+    try {
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hk-sandbox-'));
+      for (const [filePath, file] of Object.entries(options.files)) {
+        const dest = path.join(tempDir, filePath);
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.writeFileSync(dest, file.content || '');
+      }
+    } catch (e) {
+      console.error('Failed to prepare sandbox workspace files:', e);
+    }
+  }
+
   // Construct secure docker runsc command line
   // --runtime=runsc enforces gVisor kernel interception
   // --network=none or custom bridge with iptables egress filter
@@ -78,11 +93,23 @@ export async function executeInGVisor(
     '--cap-drop=ALL',
     '--security-opt=no-new-privileges',
     '--tmpfs=/tmp:rw,noexec,nosuid,size=64m',
-    'node:20-alpine',
-    'sh',
-    '-c',
-    command,
   ];
+
+  if (tempDir) {
+    dockerArgs.push('-v', `${tempDir}:/app`, '-w', '/app');
+  }
+
+  dockerArgs.push('node:20-alpine', 'sh', '-c', command);
+
+  const cleanup = () => {
+    if (tempDir && fs.existsSync(tempDir)) {
+      try {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      } catch {
+        // Ignore cleanup failure
+      }
+    }
+  };
 
   return new Promise((resolve) => {
     const proc = spawn('docker', dockerArgs, {
@@ -105,6 +132,7 @@ export async function executeInGVisor(
     });
 
     proc.on('close', (code) => {
+      cleanup();
       const durationMs = Date.now() - startTime;
       resolve({
         exitCode: code ?? 1,
@@ -118,6 +146,7 @@ export async function executeInGVisor(
     });
 
     proc.on('error', (err) => {
+      cleanup();
       const durationMs = Date.now() - startTime;
       resolve({
         exitCode: 1,

@@ -21,6 +21,7 @@ export type VFSMap = Record<string, VFSFile>;
  * - Replaces backslashes with forward slashes
  * - Strips leading './' or '/'
  * - Normalizes redundant slashes
+ * - Resolves internal relative navigation and blocks parent directory traversal
  */
 export function normalizePath(rawPath: string): string {
   if (!rawPath) return '';
@@ -28,7 +29,20 @@ export function normalizePath(rawPath: string): string {
   clean = clean.replace(/^(\.\/|\/)+/, '');
   clean = clean.replace(/\/+/g, '/');
   clean = clean.replace(/\/+$/, '');
-  return clean;
+
+  const parts = clean.split('/');
+  const safeParts: string[] = [];
+  for (const p of parts) {
+    if (p === '.' || p === '') continue;
+    if (p === '..') {
+      if (safeParts.length > 0) {
+        safeParts.pop();
+      }
+      continue;
+    }
+    safeParts.push(p);
+  }
+  return safeParts.join('/');
 }
 
 export function detectLanguage(filePath: string): string {

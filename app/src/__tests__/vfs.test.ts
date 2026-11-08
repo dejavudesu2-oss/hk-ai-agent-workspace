@@ -10,6 +10,10 @@ test('normalizePath: correctly strips leading slashes, dot-slashes, and normaliz
   assert.equal(normalizePath('./index.html'), 'index.html');
   assert.equal(normalizePath('styles.css/'), 'styles.css');
   assert.equal(normalizePath(''), '');
+  // Security: neutralizes relative directory traversal / Zip Slip escapes
+  assert.equal(normalizePath('../../etc/passwd'), 'etc/passwd');
+  assert.equal(normalizePath('src/../index.html'), 'index.html');
+  assert.equal(normalizePath('a/b/../../secret.txt'), 'secret.txt');
 });
 
 test('detectLanguage: correctly identifies programming languages', () => {

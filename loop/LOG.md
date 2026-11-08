@@ -267,4 +267,32 @@
   1. Root README.md created with complete architecture map, step-by-step installation commands, automated test matrix, and security model summary.
   2. All npm script aliases verified to point to valid executables.
 - **Status**: PASS
+- **Next Task**: HARDENING (Reviewer Verification)
+
+## [iter 14] HARDENING & RE-VERIFICATION
+- **Task**: Adversarial review and edge case hardening across all 13 tasks
+- **Commands**:
+  - `npm test`: 32 tests passed (exit 0)
+  - `npm run test:chat`: verified provider adapter, SSE chunks, and actual `curl.exe` process streaming 335 chunks (exit 0)
+  - `npm run test:e2e`: 2/2 scenarios passed (exit 0)
+  - `npm run test:vfs`: VFS dynamic tree streaming verified (exit 0)
+  - `node scripts/cost.js`: FinOps arithmetic verified (exit 0)
+  - `node scripts/audit_facts.js`: 9 claims + 3 hostile re-checks verified (exit 0)
+  - `node scripts/audit_setup.js`: setup.sh static audit passed (exit 0)
+  - `npm run bench:load` & `node bench/container_density.js`: passed (exit 0)
+  - `npm run build`: production Next.js build exited 0
+- **Exit Code**: 0
+- **Reviewer Findings & Fixes**:
+  1. Babel Standalone browser runtime crash: Injected CommonJS module shim (`window.require`, `window.exports`, `window.module`) and auto-mount script so React component imports (`import React from 'react'`) do not throw `ReferenceError: require is not defined`.
+  2. Watchdog ordering: Moved `WATCHDOG_SCRIPT` to the top of `<head>` before CDN/user scripts so `window.onerror` captures early initialization and syntax errors.
+  3. React stale closure in `page.tsx`: Closed over pre-stream `files` in `onCommand` caused empty files payload to `/api/sandbox`; fixed with accumulated `currentFiles` object.
+  4. Docker gVisor dropped `options.files`: `executeInGVisor` now mounts workspace files via temp directory (`-v <tempDir>:/app -w /app`) and cleans up on exit.
+  5. Path traversal in `normalizePath`: Sanitized relative `..` segments to prevent directory traversal and Zip Slip escapes in VFS and ZIP downloads.
+  6. Attribute parsing: Added whitespace tolerance `\s*=\s*` and self-closing tag handling to `StreamingActionParser`.
+  7. Fragile shell script: Fixed gVisor download checksum to avoid `sed` file manipulation, and added safe jq merging `(.runtimes //= {})` in `setup.sh`.
+  8. Real curl test: Added actual `curl.exe` process invocation to `scripts/test_chat_stream.js` to strictly verify T04 acceptance criteria.
+  9. Destructive command filter bypasses: Expanded regex patterns in `/api/sandbox` to catch flags variants (`rm -r -f /`, `rm --no-preserve-root -rf /`, `reboot`, etc.).
+  10. Auto-healing template: Added self-repair prompt match in `DEMO_TEMPLATES` for watchdog error fixing.
+- **Status**: PASS
 - **Next Task**: None (Queue Finished, STATUS: DONE)
+

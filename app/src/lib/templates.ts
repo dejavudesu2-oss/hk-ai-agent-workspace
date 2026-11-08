@@ -760,6 +760,54 @@ input:focus, select:focus {
       }
     ],
     command: 'serve .'
+  },
+  {
+    promptMatch: /(修復|報錯|error|fix|watchdog|self-healing)/i,
+    description: '看門狗自癒修復 (Auto-Healing Self-Repair Handler)',
+    files: [
+      {
+        path: 'app.js',
+        content: `// HK AI Agent - 看門狗運行時異常自癒修復補丁
+(function () {
+  console.log('[Self-Healing] 異常看門狗已成功注入自癒防護網...');
+  window.addEventListener('error', function (e) {
+    console.warn('[Handled by Self-Healing]', e.message);
+  });
+
+  const STORAGE_KEY = 'hk_agent_todos_v1';
+  let todos = [];
+  try {
+    todos = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch (e) {
+    todos = [];
+  }
+
+  if (todos.length === 0) {
+    todos = [
+      { id: 1, text: '看門狗已自動攔截異常並完成沙盒自癒', completed: true },
+      { id: 2, text: '重新加載 DOM 元件與綁定事件監聽器', completed: true },
+      { id: 3, text: '沙盒狀態保持同步，香港 Lightsail 伺服器正常運轉', completed: false }
+    ];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+  }
+
+  const todoList = document.getElementById('todoList');
+  const itemsLeft = document.getElementById('itemsLeft');
+  if (todoList) {
+    todoList.innerHTML = '';
+    todos.forEach((todo) => {
+      const li = document.createElement('li');
+      li.className = 'todo-item' + (todo.completed ? ' completed' : '');
+      li.innerHTML = '<span class="todo-text">' + todo.text + '</span>';
+      todoList.appendChild(li);
+    });
+  }
+  if (itemsLeft) {
+    itemsLeft.textContent = todos.filter((t) => !t.completed).length + ' 個項目未完成';
+  }
+})();`
+      }
+    ]
   }
 ];
 

@@ -316,3 +316,37 @@ test('StreamingActionParser: handles unicode, emoji, and special characters insi
   assert.ok(content.includes('<script>alert(1)</script>'));
 });
 
+test('StreamingActionParser: parses action tags with spaces around equals signs', () => {
+  const filesEnded: string[] = [];
+  let content = '';
+
+  const parser = new StreamingActionParser({
+    onFileEnd: (path, total) => {
+      filesEnded.push(path);
+      content = total.trim();
+    },
+  });
+
+  parser.feed('<sandbox_action type = "file" path = "spaced.js">\nconst spaced = true;\n</sandbox_action>');
+  parser.finish();
+
+  assert.deepEqual(filesEnded, ['spaced.js']);
+  assert.equal(content, 'const spaced = true;');
+});
+
+test('StreamingActionParser: handles self-closing action tags gracefully', () => {
+  const filesStarted: string[] = [];
+  const filesEnded: string[] = [];
+
+  const parser = new StreamingActionParser({
+    onFileStart: (path) => filesStarted.push(path),
+    onFileEnd: (path) => filesEnded.push(path),
+  });
+
+  parser.feed('<sandbox_action type="file" path="touch.txt" />\nSome trailing text');
+  parser.finish();
+
+  assert.deepEqual(filesStarted, ['touch.txt']);
+  assert.deepEqual(filesEnded, ['touch.txt']);
+});
+

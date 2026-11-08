@@ -85,6 +85,27 @@ test('generatePreviewHtml: injects Babel Standalone and React when JSX/TSX files
   assert.ok(html.includes('babel.min.js'), 'Babel standalone must be loaded for JSX/TSX');
   assert.ok(html.includes('react.production.min.js'), 'React must be loaded for JSX/TSX');
   assert.ok(html.includes('<script type="text/babel">/* App.tsx */'), 'JSX script must have text/babel type');
+  assert.ok(html.includes('window.require'), 'Browser module shim must be present for CommonJS imports');
+  // Watchdog script must precede external scripts in head
+  assert.ok(html.indexOf('WATCHDOG_ERROR') < html.indexOf('babel.min.js'), 'Watchdog must be injected before external scripts');
+});
+
+test('generatePreviewHtml: escapes closing script tags in JS code to prevent HTML parser breakage', () => {
+  const vfsWithScriptClose = {
+    'index.html': {
+      path: 'index.html',
+      content: '<html><head></head><body><script src="app.js"></script></body></html>',
+    },
+    'app.js': {
+      path: 'app.js',
+      content: 'const regex = /<\\/script>/;\nconst msg = "</script>";',
+    },
+  };
+
+  const html = generatePreviewHtml(vfsWithScriptClose);
+  // Must escape </script to <\/script
+  assert.ok(!html.includes('app.js */\nconst regex = /</script>/;'));
+  assert.ok(html.includes('<\\/script>'));
 });
 
 test('LivePreview component: sandbox attribute strictly excludes allow-same-origin', () => {

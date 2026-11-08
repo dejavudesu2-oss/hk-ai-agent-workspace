@@ -7,7 +7,7 @@ import { FileTree } from '@/components/FileTree';
 import { Editor } from '@/components/Editor';
 import { LivePreview } from '@/components/LivePreview';
 import { Terminal } from '@/components/Terminal';
-import { VFSMap } from '@/lib/vfs';
+import { VFSMap, normalizePath } from '@/lib/vfs';
 import { StreamingActionParser } from '@/lib/streaming-parser';
 
 export default function WorkspacePage() {
@@ -98,6 +98,8 @@ export default function WorkspacePage() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
+      const currentFiles: VFSMap = { ...files };
+
       // Initialize Streaming Action Parser
       const parser = new StreamingActionParser({
         onTextMessage: (delta) => {
@@ -107,6 +109,7 @@ export default function WorkspacePage() {
         },
         onFileStart: (filePath) => {
           addLog(`[file] Streaming new file: ${filePath}`);
+          currentFiles[filePath] = { path: filePath, content: '' };
           setFiles((prev) => ({
             ...prev,
             [filePath]: { path: filePath, content: '' },
@@ -115,6 +118,7 @@ export default function WorkspacePage() {
           setOpenFiles((prev) => (prev.includes(filePath) ? prev : [...prev, filePath]));
         },
         onFileContent: (filePath, totalContent) => {
+          currentFiles[filePath] = { path: filePath, content: totalContent };
           setFiles((prev) => ({
             ...prev,
             [filePath]: { path: filePath, content: totalContent },
@@ -129,7 +133,7 @@ export default function WorkspacePage() {
             const sandboxRes = await fetch('/api/sandbox', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ command: cmd, files }),
+              body: JSON.stringify({ command: cmd, files: currentFiles }),
             });
             const data = await sandboxRes.json();
             if (data.stdout) addLog(data.stdout);
@@ -174,7 +178,10 @@ export default function WorkspacePage() {
 
     const zip = new JSZip();
     for (const [path, file] of Object.entries(files)) {
-      zip.file(path, file.content);
+      const cleanPath = normalizePath(path);
+      if (cleanPath) {
+        zip.file(cleanPath, file.content);
+      }
     }
 
     const blob = await zip.generateAsync({ type: 'blob' });

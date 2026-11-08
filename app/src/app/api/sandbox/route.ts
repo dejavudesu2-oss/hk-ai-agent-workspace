@@ -21,12 +21,15 @@ export async function POST(req: NextRequest) {
 
     // 1. Syscall & AST Security Filter: Guard against destructive commands
     const dangerousPatterns = [
-      /rm\s+-rf\s+\//i,
+      /rm\s+.*(-[a-zA-Z]*r[a-zA-Z]*\s+-[a-zA-Z]*f[a-zA-Z]*|-[a-zA-Z]*rf[a-zA-Z]*|-[a-zA-Z]*fr[a-zA-Z]*)\s+.*(\/|~|\$)/i,
+      /rm\s+-[a-zA-Z]*\s+--no-preserve-root/i,
       /:(){:|:&};:/,
-      />\s*\/dev\/sda/i,
+      />\s*\/dev\/(sd[a-z]|nvme|null|zero|random|urandom)/i,
       /mkfs/i,
-      /chmod\s+-R\s+777\s+\//i,
+      /chmod\s+.*(-[a-zA-Z]*R[a-zA-Z]*\s+)?(777|000)\s+(\/|~)/i,
       /dd\s+if=/i,
+      /\b(shutdown|reboot|poweroff|halt)\b/i,
+      /\b(wget|curl)\b.*\|\s*(sh|bash)/i,
     ];
 
     for (const pattern of dangerousPatterns) {

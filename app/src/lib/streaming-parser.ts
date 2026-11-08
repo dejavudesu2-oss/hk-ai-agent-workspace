@@ -146,12 +146,12 @@ export class StreamingActionParser {
         const tagHeader = this.buffer.substring(0, tagClose + 1);
         this.buffer = this.buffer.substring(tagClose + 1);
 
+        const isSelfClosing = tagHeader.trim().endsWith('/>');
         const actionType = this.extractAttribute(tagHeader, 'type');
         const rawFilePath = this.extractAttribute(tagHeader, 'path') || this.extractAttribute(tagHeader, 'filePath');
         const filePath = rawFilePath ? normalizePath(rawFilePath) : '';
 
         if (actionType === 'file' && filePath) {
-          this.state = 'FILE_CONTENT';
           this.currentFilePath = filePath;
           this.currentFileContent = '';
 
@@ -160,14 +160,22 @@ export class StreamingActionParser {
             this.files.set(this.currentFilePath, {
               path: this.currentFilePath,
               content: '',
-              isComplete: false,
+              isComplete: isSelfClosing,
             });
           }
           this.callbacks.onFileStart?.(this.currentFilePath);
+
+          if (isSelfClosing) {
+            this.closeCurrentFile();
+          } else {
+            this.state = 'FILE_CONTENT';
+          }
           advanced = true;
         } else if (actionType === 'command' || actionType === 'shell') {
-          this.state = 'COMMAND_CONTENT';
-          this.currentCommandContent = '';
+          if (!isSelfClosing) {
+            this.state = 'COMMAND_CONTENT';
+            this.currentCommandContent = '';
+          }
           advanced = true;
         } else {
           // Unknown action tag, stay in TEXT
@@ -327,11 +335,11 @@ export class StreamingActionParser {
   }
 
   private extractAttribute(tag: string, attrName: string): string | null {
-    const quotedRegex = new RegExp(`${attrName}=["']([^"']+)["']`, 'i');
+    const quotedRegex = new RegExp(`${attrName}\\s*=\\s*["']([^"']+)["']`, 'i');
     const quotedMatch = tag.match(quotedRegex);
     if (quotedMatch) return quotedMatch[1];
 
-    const unquotedRegex = new RegExp(`${attrName}=([^\\s>]+)`, 'i');
+    const unquotedRegex = new RegExp(`${attrName}\\s*=\\s*([^\\s>]+)`, 'i');
     const unquotedMatch = tag.match(unquotedRegex);
     return unquotedMatch ? unquotedMatch[1] : null;
   }

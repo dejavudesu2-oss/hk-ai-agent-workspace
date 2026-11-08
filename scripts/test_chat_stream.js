@@ -71,11 +71,105 @@ async function testMockStreamChunks() {
   console.log('✓ Stream successfully emitted SSE chunks with complete files.\n');
 }
 
+async function testCurlStream() {
+  console.log('--- Test 3: Actual curl to the endpoint streams chunks ---');
+  const http = require('http');
+  const { spawn } = require('child_process');
+  const { POST: chatHandler } = require('../app/src/app/api/chat/route');
+
+  const server = http.createServer(async (req, res) => {
+    if (req.url === '/api/chat' && req.method === 'POST') {
+      let body = '';
+      req.on('data', (chunk) => (body += chunk));
+      req.on('end', async () => {
+        try {
+          const fakeReq = {
+            url: 'http://localhost/api/chat',
+            method: 'POST',
+            headers: new Map(Object.entries(req.headers)),
+            json: async () => JSON.parse(body || '{}'),
+          };
+          const response = await chatHandler(fakeReq);
+          res.writeHead(response.status, {
+            'Content-Type': response.headers.get('content-type') || 'text/event-stream',
+            'Transfer-Encoding': 'chunked',
+            Connection: 'keep-alive',
+          });
+          const reader = response.body.getReader();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            res.write(Buffer.from(value));
+          }
+          res.end();
+        } catch (e) {
+          res.writeHead(500);
+          res.end(e.message);
+        }
+      });
+    } else {
+      res.writeHead(404);
+      res.end();
+    }
+  });
+
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const port = server.address().port;
+  console.log(`Endpoint listening on http://127.0.0.1:${port}/api/chat`);
+
+  const curlPromise = new Promise((resolve, reject) => {
+    const curl = spawn('curl.exe', [
+      '-N',
+      '-s',
+      '-X',
+      'POST',
+      `http://127.0.0.1:${port}/api/chat`,
+      '-H',
+      'Content-Type: application/json',
+      '-d',
+      JSON.stringify({ message: 'build me a todo app' }),
+    ]);
+
+    let chunks = 0;
+    let totalBytes = 0;
+    let output = '';
+
+    curl.stdout.on('data', (d) => {
+      chunks++;
+      totalBytes += d.length;
+      output += d.toString();
+    });
+
+    curl.stderr.on('data', (err) => {
+      console.error('curl stderr:', err.toString());
+    });
+
+    curl.on('close', (code) => {
+      server.close();
+      if (code !== 0) {
+        return reject(new Error(`curl exited with code ${code}`));
+      }
+      resolve({ chunks, totalBytes, output });
+    });
+  });
+
+  const result = await curlPromise;
+  console.log(`curl received ${result.chunks} streaming chunks (${result.totalBytes} bytes)`);
+  if (result.chunks < 5) {
+    throw new Error(`Expected curl to receive multiple stream chunks, got ${result.chunks}`);
+  }
+  if (!result.output.includes('香港 AI 待辦清單') || !result.output.includes('todoInput')) {
+    throw new Error('curl output missing expected todo app contents');
+  }
+  console.log('✓ curl command successfully connected and streamed chunks from endpoint.\n');
+}
+
 async function main() {
   try {
     await testProviderSelection();
     await testMockStreamChunks();
-    console.log('✅ T04 Acceptance Test PASSED: Mock LLM streams SSE chunks and provider adapter switches via env.');
+    await testCurlStream();
+    console.log('✅ T04 Acceptance Test PASSED: Mock LLM streams SSE chunks, provider adapter switches via env, and curl streams chunks.');
     process.exit(0);
   } catch (err) {
     console.error('❌ T04 Acceptance Test FAILED:', err);
