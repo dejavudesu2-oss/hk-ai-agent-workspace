@@ -253,3 +253,18 @@
   2. Replaced deprecated `ptrace` mention with `systrap`.
 - **Status**: PASS
 - **Next Task**: T13
+
+## [iter 13] T13
+- **Task**: T13 README with exact run commands & fresh startup test
+- **Command**: `npm run dev`
+- **Exit Code**: 0 (Clean startup confirmed, Ready in 1661ms at http://localhost:3000)
+- **Output**:
+  ▲ Next.js 14.2.15
+  - Local:        http://localhost:3000
+  ✓ Starting...
+  ✓ Ready in 1661ms
+- **Reviewer Findings & Fixes**:
+  1. Root README.md created with complete architecture map, step-by-step installation commands, automated test matrix, and security model summary.
+  2. All npm script aliases verified to point to valid executables.
+- **Status**: PASS
+- **Next Task**: None (Queue Finished, STATUS: DONE)
