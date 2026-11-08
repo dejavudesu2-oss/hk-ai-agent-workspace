@@ -10,7 +10,7 @@
 | **T06** | Monaco editor + file tree + in-memory virtual file system fed by parser | `npm run build` and `npm run test:vfs` exit 0; files appear as stream arrives | DONE | 1 |
 | **T07** | Live preview in sandboxed iframe with security documentation (sandbox attribute, origin, CSP) | `npm test` passes preview generator, CSP, and sandbox attribute isolation audits | DONE | 1 |
 | **T08** | /api/sandbox backend execution with Docker + gVisor, resource limits, egress allowlist | Node tests pass for API logic; live Docker+gVisor marked UNTESTED on host | DONE | 1 |
-| **T09** | infra/setup.sh VPS bootstrap script | `shellcheck infra/setup.sh` or bash syntax verification; mark UNTESTED if unsupported locally | TODO | 0 |
+| **T09** | infra/setup.sh VPS bootstrap script | `bash -n` syntax passed; `shellcheck` marked UNTESTED (binary absent on Windows host) | DONE | 1 |
 | **T10** | /bench loadtest and container-density scripts + capacity formula with [assumption] tags | Run scripts or execute capacity calculation script with tagged assumptions | TODO | 0 |
 | **T11** | End-to-end: prompt "build me a todo app" via the mock provider streams files into the editor and preview renders | Automated e2e test script exits 0 | TODO | 0 |
 | **T12** | /plan/7day_plan.md (day-by-day, hours, tests) and /plan/risks.md (top 10 risks + mitigations) | Review and verify consistency with actual built code | TODO | 0 |

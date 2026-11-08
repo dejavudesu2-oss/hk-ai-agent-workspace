@@ -163,3 +163,23 @@
   2. Egress allowlist strictly restricts outbound network traffic to approved CDNs/registries.
 - **Status**: PASS
 - **Next Task**: T09
+
+## [iter 9] T09
+- **Task**: T09 infra/setup.sh VPS bootstrap script
+- **Command**: `node scripts/audit_setup.js`
+- **Exit Code**: 0
+- **Output**:
+  --- Static Audit of infra/setup.sh ---
+  ✓ Strict error handling (set -euo pipefail) present
+  ✓ Modern gVisor non-KVM platform (--platform=systrap) configured
+  ✓ Caddy reverse proxy configured with flush_interval -1 for real-time SSE streaming
+  ✓ Git Bash syntax check (-n) exited 0 with no syntax errors
+  Note: shellcheck binary is not installed in this Windows host; marked [UNTESTED for shellcheck]
+  ✅ infra/setup.sh static and syntax audit PASSED.
+- **Honesty Rule Tag**:
+  Marked **[UNTESTED: shellcheck binary not present on Windows host]**. Validated with Git Bash `bash -n` syntax check (exit code 0).
+- **Reviewer Findings & Fixes**:
+  1. Verified strict bash flags `set -euo pipefail` prevent partial silent command failures.
+  2. Verified Caddy configuration has `flush_interval -1` to avoid SSE event buffering.
+- **Status**: PASS
+- **Next Task**: T10
