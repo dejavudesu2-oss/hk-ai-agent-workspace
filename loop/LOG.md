@@ -130,3 +130,20 @@
   2. Created `test:vfs` script in root package.json for deterministic non-visual regression testing of streaming VFS tree population.
 - **Status**: PASS
 - **Next Task**: T07
+
+## [iter 7] T07
+- **Task**: T07 Live preview in sandboxed iframe (Sandpack vs Babel decision + CSP security documentation)
+- **Command**: `npm test`
+- **Exit Code**: 0
+- **Output**:
+  ✔ safeReplace: preserves dollar patterns without regex replacement substitution corruption
+  ✔ escapeRegExp: prevents syntax error when file paths contain regex special characters
+  ✔ generatePreviewHtml: renders generated todo app with inlined styles, scripts, CSP, and watchdog
+  ✔ generatePreviewHtml: injects Babel Standalone and React when JSX/TSX files are present
+  ✔ LivePreview component: sandbox attribute strictly excludes allow-same-origin
+  ℹ tests 28 | pass 28 | fail 0
+- **Reviewer Findings & Fixes**:
+  1. Security flaw: `LivePreview` previously included `allow-same-origin` in sandbox attribute, which allows same-origin / srcDoc scripts to access `window.parent.document`. Removed `allow-same-origin` to enforce opaque `null` origin.
+  2. Documented architectural decision in `loop/DECISIONS.md` and created `plan/preview_security.md` detailing CSP, sandbox attributes, and why Babel Standalone / Virtual Document was chosen over Sandpack.
+- **Status**: PASS
+- **Next Task**: T08
