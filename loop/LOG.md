@@ -83,3 +83,30 @@
   2. Exposed `"test:chat"` npm script in root `package.json` for reproducible automated verification.
 - **Status**: PASS
 - **Next Task**: T05
+
+## [iter 5] T05
+- **Task**: T05 Streaming file-block parser (XML-style file blocks)
+- **Command**: `npm test`
+- **Exit Code**: 0
+- **Output**:
+  ✔ StreamingActionParser: parses single file in single chunk
+  ✔ StreamingActionParser: handles chunks split across tag boundaries
+  ✔ StreamingActionParser: handles tag split across chunks with very long file path
+  ✔ StreamingActionParser: handles JSX elements and < symbols inside file without premature withholding
+  ✔ StreamingActionParser: flushes remaining buffer on finish even if stream ended abruptly
+  ✔ StreamingActionParser: handles flexible closing tags with whitespace
+  ✔ StreamingActionParser: swallows boltArtifact container tags without polluting chat messages
+  ✔ StreamingActionParser: normalizes file paths with leading ./ and backslashes
+  ✔ StreamingActionParser: handles multiple files and commands in sequence
+  ✔ StreamingActionParser: compatibility with boltAction tags
+  ✔ StreamingActionParser: auto-recovers when LLM omits closing tag before starting next file
+  ✔ StreamingActionParser: handles unquoted attribute syntax without crashing
+  ✔ StreamingActionParser: ignores malformed action tag missing path attribute safely
+  ✔ StreamingActionParser: extreme fragmentation with 1-character feed chunks
+  ✔ StreamingActionParser: handles unicode, emoji, and special characters inside content
+  ℹ tests 25 | pass 25 | fail 0
+- **Reviewer Findings & Fixes**:
+  1. If an LLM omitted closing tag `</sandbox_action>` before immediately starting `<sandbox_action type="file" path="...">`, previous file was not finalized. Added lookahead auto-recovery.
+  2. Supported unquoted attribute formats (`path=src/index.js`) to handle varying LLM outputs.
+- **Status**: PASS
+- **Next Task**: T06

@@ -6,7 +6,7 @@
 | **T02** | /plan/facts.md: verify claims with URLs or UNVERIFIED, re-check 3 most favorable claims | `node scripts/audit_facts.js` exits 0; all 9 claims verified, 3 favorable claims re-checked | DONE | 1 |
 | **T03** | /plan/cost.md + scripts/cost.js: per-task and per-user cost from token counts | `node scripts/cost.js` prints USD and HKD, arithmetic matches hand-computed example | DONE | 1 |
 | **T04** | Mock LLM provider streaming SSE tokens at realistic rate + provider adapter (mock/real via env) | `npm run test:chat` verifies SSE chunks and provider adapter switching | DONE | 1 |
-| **T05** | Streaming file-block parser (XML-style file blocks) | `npm test` passes at least 10 parser test cases (split chunks, malformed input) | TODO | 0 |
+| **T05** | Streaming file-block parser (XML-style file blocks) | `npm test` passes 25 cases (including 15 parser edge cases) | DONE | 1 |
 | **T06** | Monaco editor + file tree + in-memory virtual file system fed by parser | `npm run build` passes and scripted test shows files appear as stream arrives | TODO | 0 |
 | **T07** | Live preview in sandboxed iframe with security documentation (sandbox attribute, origin, CSP) | Automated preview test passes or verified with exact reproduction steps | TODO | 0 |
 | **T08** | /api/sandbox backend execution with Docker + gVisor, resource limits, egress allowlist | Node test on sandbox API endpoint; if Docker/gVisor unavailable, mark UNTESTED | TODO | 0 |
