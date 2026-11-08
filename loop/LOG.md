@@ -240,3 +240,16 @@
   2. Tested multilingual prompts (English Todo app + Cantonese Hong Kong Taxi Splitter) to prove regional suitability.
 - **Status**: PASS
 - **Next Task**: T12
+
+## [iter 12] T12
+- **Task**: T12 /plan/7day_plan.md and /plan/risks.md based on actual built codebase
+- **Command**: Static review against built code
+- **Exit Code**: 0
+- **Output**:
+  1. `plan/7day_plan.md`: Updated Day 3 to reflect secure sandbox attribute (`sandbox="allow-scripts allow-modals allow-forms"` omitting `allow-same-origin`), updated Day 6 to specify modern `--platform=systrap` gVisor platform.
+  2. `plan/risks.md`: Updated all top 10 risks to match built code and 2026 facts (TVP termination, OpenAI/Anthropic regional blocking, gVisor systrap, iframe security, and zero-data retention).
+- **Reviewer Findings & Fixes**:
+  1. Found stale mention of `allow-same-origin` in 7day_plan.md that contradicted T07 security hardening; corrected.
+  2. Replaced deprecated `ptrace` mention with `systrap`.
+- **Status**: PASS
+- **Next Task**: T13

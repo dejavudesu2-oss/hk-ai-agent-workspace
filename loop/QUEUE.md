@@ -13,5 +13,5 @@
 | **T09** | infra/setup.sh VPS bootstrap script | `bash -n` syntax passed; `shellcheck` marked UNTESTED (binary absent on Windows host) | DONE | 1 |
 | **T10** | /bench loadtest and container-density scripts + capacity formula with [assumption] tags | `node bench/container_density.js` and `npm run bench:load` exit 0 | DONE | 1 |
 | **T11** | End-to-end: prompt "build me a todo app" via the mock provider streams files into the editor and preview renders | `npm run test:e2e` exits 0 with 2/2 passing scenarios | DONE | 1 |
-| **T12** | /plan/7day_plan.md (day-by-day, hours, tests) and /plan/risks.md (top 10 risks + mitigations) | Review and verify consistency with actual built code | TODO | 0 |
+| **T12** | /plan/7day_plan.md (day-by-day, hours, tests) and /plan/risks.md (top 10 risks + mitigations) | Aligned with actual built codebase; reviewed and verified | DONE | 1 |
 | **T13** | README with exact run commands | Fresh run instructions verified with `npm run dev` / test execution | TODO | 0 |
