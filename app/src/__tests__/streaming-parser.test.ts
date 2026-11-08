@@ -219,3 +219,100 @@ test('StreamingActionParser: compatibility with boltAction tags', () => {
   assert.deepEqual(filesCreated, ['package.json']);
   assert.equal(content, '{"name":"demo"}');
 });
+
+test('StreamingActionParser: auto-recovers when LLM omits closing tag before starting next file', () => {
+  const filesEnded: string[] = [];
+  const contents: Record<string, string> = {};
+
+  const parser = new StreamingActionParser({
+    onFileEnd: (path, total) => {
+      filesEnded.push(path);
+      contents[path] = total.trim();
+    },
+  });
+
+  // Notice no </sandbox_action> closing tag for file1.js
+  parser.feed('<sandbox_action type="file" path="file1.js">\nconst a = 1;\n');
+  parser.feed('<sandbox_action type="file" path="file2.js">\nconst b = 2;\n</sandbox_action>');
+  parser.finish();
+
+  assert.deepEqual(filesEnded, ['file1.js', 'file2.js']);
+  assert.equal(contents['file1.js'], 'const a = 1;');
+  assert.equal(contents['file2.js'], 'const b = 2;');
+});
+
+test('StreamingActionParser: handles unquoted attribute syntax without crashing', () => {
+  const filesEnded: string[] = [];
+  let content = '';
+
+  const parser = new StreamingActionParser({
+    onFileEnd: (path, total) => {
+      filesEnded.push(path);
+      content = total.trim();
+    },
+  });
+
+  parser.feed('<sandbox_action type=file path=src/main.ts>\nconst ready = true;\n</sandbox_action>');
+  parser.finish();
+
+  assert.deepEqual(filesEnded, ['src/main.ts']);
+  assert.equal(content, 'const ready = true;');
+});
+
+test('StreamingActionParser: ignores malformed action tag missing path attribute safely', () => {
+  const textMessages: string[] = [];
+  const filesEnded: string[] = [];
+
+  const parser = new StreamingActionParser({
+    onTextMessage: (delta) => textMessages.push(delta),
+    onFileEnd: (path) => filesEnded.push(path),
+  });
+
+  // Malformed tag: missing path
+  parser.feed('Here is an invalid tag: <sandbox_action type="file">oops</sandbox_action> Still working.');
+  parser.finish();
+
+  assert.equal(filesEnded.length, 0);
+  const fullText = textMessages.join('');
+  assert.ok(fullText.includes('Here is an invalid tag'));
+  assert.ok(fullText.includes('Still working'));
+});
+
+test('StreamingActionParser: extreme fragmentation with 1-character feed chunks', () => {
+  const filesEnded: string[] = [];
+  let content = '';
+
+  const parser = new StreamingActionParser({
+    onFileEnd: (path, total) => {
+      filesEnded.push(path);
+      content = total.trim();
+    },
+  });
+
+  const fullPayload = '<sandbox_action type="file" path="tiny.txt">Hello HK AI Agent!</sandbox_action>';
+
+  // Feed 1 character at a time
+  for (const char of fullPayload) {
+    parser.feed(char);
+  }
+  parser.finish();
+
+  assert.deepEqual(filesEnded, ['tiny.txt']);
+  assert.equal(content, 'Hello HK AI Agent!');
+});
+
+test('StreamingActionParser: handles unicode, emoji, and special characters inside content', () => {
+  let content = '';
+
+  const parser = new StreamingActionParser({
+    onFileContent: (_path, total) => (content = total),
+  });
+
+  const unicodeSnippet = 'const greeting = "你好，香港！🇭🇰 $HKD 7.80 <script>alert(1)</script>";';
+  parser.feed(`<sandbox_action type="file" path="test.ts">\n${unicodeSnippet}\n</sandbox_action>`);
+  parser.finish();
+
+  assert.ok(content.includes('你好，香港！🇭🇰'));
+  assert.ok(content.includes('<script>alert(1)</script>'));
+});
+

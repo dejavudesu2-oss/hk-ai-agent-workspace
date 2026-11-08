@@ -174,7 +174,21 @@ export class StreamingActionParser {
           advanced = true;
         }
       } else if (this.state === 'FILE_CONTENT') {
+        const openMatchIdx = this.findOpeningTagIndex(this.buffer);
         const closeMatch = this.findClosingTag(this.buffer);
+
+        // Auto-recover if LLM starts a new action without closing previous one
+        if (openMatchIdx !== -1 && (closeMatch === null || openMatchIdx < closeMatch.index)) {
+          const emitDelta = this.buffer.substring(0, openMatchIdx);
+          if (emitDelta.length > 0) {
+            this.appendCurrentFile(emitDelta);
+          }
+          this.closeCurrentFile();
+          this.buffer = this.buffer.substring(openMatchIdx);
+          this.state = 'TEXT';
+          advanced = true;
+          continue;
+        }
 
         if (!closeMatch) {
           // Check if buffer ends with a potential partial closing tag (e.g., '</sand' or '</')
@@ -203,7 +217,17 @@ export class StreamingActionParser {
         this.state = 'TEXT';
         advanced = true;
       } else if (this.state === 'COMMAND_CONTENT') {
+        const openMatchIdx = this.findOpeningTagIndex(this.buffer);
         const closeMatch = this.findClosingTag(this.buffer);
+
+        if (openMatchIdx !== -1 && (closeMatch === null || openMatchIdx < closeMatch.index)) {
+          this.currentCommandContent += this.buffer.substring(0, openMatchIdx);
+          this.closeCurrentCommand();
+          this.buffer = this.buffer.substring(openMatchIdx);
+          this.state = 'TEXT';
+          advanced = true;
+          continue;
+        }
 
         if (!closeMatch) {
           const partialIndex = this.findPartialClosingTagIndex(this.buffer);
@@ -303,8 +327,12 @@ export class StreamingActionParser {
   }
 
   private extractAttribute(tag: string, attrName: string): string | null {
-    const regex = new RegExp(`${attrName}=["']([^"']+)["']`, 'i');
-    const match = tag.match(regex);
-    return match ? match[1] : null;
+    const quotedRegex = new RegExp(`${attrName}=["']([^"']+)["']`, 'i');
+    const quotedMatch = tag.match(quotedRegex);
+    if (quotedMatch) return quotedMatch[1];
+
+    const unquotedRegex = new RegExp(`${attrName}=([^\\s>]+)`, 'i');
+    const unquotedMatch = tag.match(unquotedRegex);
+    return unquotedMatch ? unquotedMatch[1] : null;
   }
 }
