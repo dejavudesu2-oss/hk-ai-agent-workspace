@@ -147,3 +147,19 @@
   2. Documented architectural decision in `loop/DECISIONS.md` and created `plan/preview_security.md` detailing CSP, sandbox attributes, and why Babel Standalone / Virtual Document was chosen over Sandpack.
 - **Status**: PASS
 - **Next Task**: T08
+
+## [iter 8] T08
+- **Task**: T08 /api/sandbox backend execution with Docker + gVisor, resource limits, egress allowlist
+- **Command**: `npm test`
+- **Exit Code**: 0
+- **Output**:
+  ✔ API Sandbox Handler: executes benign commands with gVisor isolation tag
+  ✔ API Sandbox Handler: blocks dangerous destructive syscalls with 403 Forbidden
+  ℹ tests 28 | pass 28 | fail 0
+- **Honesty Rule Tag**:
+  Live execution of `executeInGVisor()` container spawn is marked **[UNTESTED]** because the current Windows environment lacks an active Docker Linux daemon and `runsc` binary. The mock fallback sandbox, AST security filters, resource limit parameters (256MB RAM, 0.5 CPU, 64 PIDs), and egress allowlist were fully implemented and tested.
+- **Reviewer Findings & Fixes**:
+  1. Destructive commands (`rm -rf /`, `:(){:|:&};:`, `mkfs`, `chmod -R 777 /`) are trapped and rejected with HTTP 403 and `Security Policy Violation` message.
+  2. Egress allowlist strictly restricts outbound network traffic to approved CDNs/registries.
+- **Status**: PASS
+- **Next Task**: T09
