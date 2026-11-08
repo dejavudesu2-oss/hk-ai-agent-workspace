@@ -45,3 +45,21 @@
   2. Verified that direct Anthropic Claude calls from HK Bedrock accounts fail with `ValidationException`, and OpenAI terms forbid HK direct traffic, confirming that local routing must prioritize DeepSeek + SiliconFlow backup.
 - **Status**: PASS
 - **Next Task**: T03
+
+## [iter 3] T03
+- **Task**: T03 /plan/cost.md + scripts/cost.js FinOps unit economics
+- **Command**: `node scripts/cost.js`
+- **Exit Code**: 0
+- **Output**:
+  1. Single Session Cost (3 turns: init, tweak, fix):
+     Total Task Cost: $0.003636 USD | HK$ 0.02836
+     ✓ Matches hand-computed baseline: $0.003636 USD / HK$ 0.02836
+  2. Monthly Personas: Free ($0.0436 USD / HK$ 0.3403), Pro ($0.2182 USD / HK$ 1.7016)
+  3. Platform Fixed OpEx ($25.00 USD / HK$ 195.00), Breakeven Users: 3.16 -> 4 Users
+  4. Scale Projection (200 Pro, 800 Free): Net Operating Profit +HK$ 11,236.01 / mo (82.6% margin)
+  ✅ FinOps Calculation verified: All arithmetic matches hand-computed examples.
+- **Reviewer Findings & Fixes**:
+  1. A risk of runaway bot sessions inflating token costs: documented need for daily quota and timeout circuit breaker.
+  2. Verified Stripe HK fees (3.4% + HK$2.35) against exact HKD cent billing rules.
+- **Status**: PASS
+- **Next Task**: T04
