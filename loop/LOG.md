@@ -110,3 +110,23 @@
   2. Supported unquoted attribute formats (`path=src/index.js`) to handle varying LLM outputs.
 - **Status**: PASS
 - **Next Task**: T06
+
+## [iter 6] T06
+- **Task**: T06 Monaco editor + file tree + in-memory virtual file system fed by parser
+- **Command**: `npm run build; npm run test:vfs`
+- **Exit Code**: 0
+- **Output**:
+  ✓ Compiled successfully
+  ✓ Generating static pages (5/5)
+  --- Testing Virtual File System Fed by Streaming Parser ---
+  ✓ Intermediate check 1: 1 file in VFS, tree has root node "src"
+  ✓ Intermediate check 2: 2 files in VFS, nested folders detected
+  Final VFS file count: 3
+  Final file tree root entries: src
+  "src" folder children count: 3
+  ✅ T06 Scripted Check PASSED: VFS and file tree dynamically populate as stream arrives.
+- **Reviewer Findings & Fixes**:
+  1. Verified tab bar edge cases when 0 files open (displays fallback prompt).
+  2. Created `test:vfs` script in root package.json for deterministic non-visual regression testing of streaming VFS tree population.
+- **Status**: PASS
+- **Next Task**: T07
