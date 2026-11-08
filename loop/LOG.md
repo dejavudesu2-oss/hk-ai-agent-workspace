@@ -206,3 +206,37 @@
   2. Every capacity planning input was explicitly tagged `[assumption]` or `[verified]`.
 - **Status**: PASS
 - **Next Task**: T11
+
+## [iter 11] T11
+- **Task**: T11 End-to-end: prompt "build me a todo app" streams files into editor and preview renders
+- **Command**: `npm run test:e2e`
+- **Exit Code**: 0
+- **Output**:
+  ================================================================
+   HK AI AGENT WORKSPACE - END-TO-END VERIFICATION
+  ================================================================
+  Step 1: Dispatching prompt to /api/chat...
+  ✓ /api/chat connected: HTTP 200 text/event-stream received
+  Step 2: Consuming SSE stream through StreamingActionParser into VFS...
+    [Stream Event] Starting file: package.json (245 bytes)
+    [Stream Event] Starting file: styles.css (3866 bytes)
+    [Stream Event] Starting file: app.js (3647 bytes)
+    [Stream Event] Starting file: index.html (1071 bytes)
+    [Stream Event] Shell command detected: npm install && npm start
+  ✓ Stream completed: 335 chunks, 9774 bytes processed.
+  Step 3: Validating Virtual File System (VFS)...
+    ✓ Verified 4 files and file tree
+  Step 4: Compiling live preview HTML via generatePreviewHtml()...
+    ✓ Content-Security-Policy meta header present
+    ✓ Watchdog error listener injected
+    ✓ Todo interactive controls and reactive logic inlined
+  Step 5: Testing Hong Kong localized prompt: "寫一個香港的士分賬計算器"...
+    ✓ Hong Kong Taxi Fare Splitter streamed and rendered successfully!
+  ================================================================
+   ✅ T11 END-TO-END ACCEPTANCE TEST PASSED (2/2 scenarios)
+  ================================================================
+- **Reviewer Findings & Fixes**:
+  1. Verified that streaming token chunks assemble into complete valid files without character loss.
+  2. Tested multilingual prompts (English Todo app + Cantonese Hong Kong Taxi Splitter) to prove regional suitability.
+- **Status**: PASS
+- **Next Task**: T12
