@@ -92,7 +92,7 @@ if [ -f "$DAEMON_JSON" ]; then
     cp "$DAEMON_JSON" "${DAEMON_JSON}.bak"
     jq '.runtimes["runsc"] = {
         "path": "/usr/local/bin/runsc",
-        "runtimeArgs": ["--platform=ptrace"]
+        "runtimeArgs": ["--platform=systrap"]
     }' "$DAEMON_JSON" > "${DAEMON_JSON}.tmp" && mv "${DAEMON_JSON}.tmp" "$DAEMON_JSON"
 else
     cat <<'EOF' > "$DAEMON_JSON"
@@ -101,7 +101,7 @@ else
     "runsc": {
       "path": "/usr/local/bin/runsc",
       "runtimeArgs": [
-        "--platform=ptrace"
+        "--platform=systrap"
       ]
     }
   },
