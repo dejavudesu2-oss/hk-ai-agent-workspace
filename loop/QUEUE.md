@@ -2,7 +2,7 @@
 
 | ID | Description | Acceptance Test Command & Expected Result | Status | Attempts |
 | :--- | :--- | :--- | :--- | :--- |
-| **T01** | Repo skeleton: Next.js app, .gitignore, .env.example | `npm install && npm run build` exits 0 | TODO | 0 |
+| **T01** | Repo skeleton: Next.js app, .gitignore, .env.example | `npm install && npm run build` exits 0 | DONE | 1 |
 | **T02** | /plan/facts.md: verify claims with URLs or UNVERIFIED, re-check 3 most favorable claims | Every row has a URL or says UNVERIFIED, and at least 3 favorable claims verified. Check via file audit. | TODO | 0 |
 | **T03** | /plan/cost.md + scripts/cost.js: per-task and per-user cost from token counts | `node scripts/cost.js` prints USD and HKD, arithmetic matches hand-computed example | TODO | 0 |
 | **T04** | Mock LLM provider streaming SSE tokens at realistic rate + provider adapter (mock/real via env) | `curl -N http://localhost:3000/api/chat` or test script streams SSE chunks | TODO | 0 |
