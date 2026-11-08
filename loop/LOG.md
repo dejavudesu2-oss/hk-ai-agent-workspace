@@ -63,3 +63,23 @@
   2. Verified Stripe HK fees (3.4% + HK$2.35) against exact HKD cent billing rules.
 - **Status**: PASS
 - **Next Task**: T04
+
+## [iter 4] T04
+- **Task**: T04 Mock LLM provider + adapter (mock and real, selected via env)
+- **Command**: `npm run test:chat`
+- **Exit Code**: 0
+- **Output**:
+  --- Test 1: Provider selection via env variable ---
+  LLM_PROVIDER=mock -> Selected: Mock LLM Provider (Offline Simulator)
+  LLM_PROVIDER=real -> Selected: Real Multi-Provider LLM (DeepSeek / SiliconFlow)
+  ✓ Provider adapter selection verified.
+  --- Test 2: SSE stream chunk cadence & delivery ---
+  Received 335 chunks (9774 bytes) in 5275ms
+  Average chunk size: 29.2 bytes
+  ✓ Stream successfully emitted SSE chunks with complete files.
+  ✅ T04 Acceptance Test PASSED: Mock LLM streams SSE chunks and provider adapter switches via env.
+- **Reviewer Findings & Fixes**:
+  1. If client aborts or upstream connection drops, stream reader lock was not released cleanly. Added `finally { reader.releaseLock(); }` block in `RealLLMProvider`.
+  2. Exposed `"test:chat"` npm script in root `package.json` for reproducible automated verification.
+- **Status**: PASS
+- **Next Task**: T05
