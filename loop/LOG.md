@@ -312,3 +312,14 @@
   5. Security & dependency: `npm audit fix` applied safely; Next.js 14.2.35 verified clean and passing.
 - **Status**: PASS
 - **Next Task**: T15
+
+## [iter 2] T15
+- **Task**: T15 COST GUARD: per-IP rate limit, max input size, max_tokens, daily budget kill switch, invite code on /api/chat
+- **Commands**:
+  - `npm test`: 38/38 tests passed (6 new dedicated cost-guard tests)
+- **Exit Code**: 0
+- **Reviewer Findings & Fixes**:
+  1. Implemented `app/src/lib/cost-guard.ts` handling client IP extraction (`CF-Connecting-IP`, `X-Forwarded-For`), sliding-window rate limit (429), max input size (429), max_tokens cap (429), daily budget tracking ($0.50 USD cap) and kill switch (503), plus invite-code gate (403).
+  2. Verified `RealLLMProvider` enforces the $0.50 cap and parses usage chunks to accumulate live spend; upstream calls are blocked if budget is exhausted.
+- **Status**: PASS
+- **Next Task**: T16

@@ -1,8 +1,18 @@
 import { getMatchingTemplate } from './templates';
+import {
+  isBudgetExhausted,
+  recordSpendUSD,
+  DEFAULT_CONFIG,
+} from './cost-guard';
+
+export interface ChatOptions {
+  maxTokens?: number;
+  files?: Record<string, { path: string; content: string }>;
+}
 
 export interface LLMProvider {
   name: string;
-  streamChat(message: string): Promise<Response>;
+  streamChat(message: string, options?: ChatOptions): Promise<Response>;
 }
 
 export const SYSTEM_PROMPT = `
@@ -29,7 +39,7 @@ Write complete files without placeholders, TODOs, or truncation. Provide helpful
 export class MockLLMProvider implements LLMProvider {
   name = 'Mock LLM Provider (Offline Simulator)';
 
-  async streamChat(message: string): Promise<Response> {
+  async streamChat(message: string, options?: ChatOptions): Promise<Response> {
     const template = getMatchingTemplate(message);
     const encoder = new TextEncoder();
 
@@ -102,7 +112,11 @@ export class RealLLMProvider implements LLMProvider {
     this.siliconflowKey = siliconflowKey || process.env.SILICONFLOW_API_KEY;
   }
 
-  async streamChat(message: string): Promise<Response> {
+  async streamChat(message: string, options?: ChatOptions): Promise<Response> {
+    if (isBudgetExhausted()) {
+      throw new Error('Daily API budget limit ($0.50 USD) exhausted or kill switch active. Upstream call blocked.');
+    }
+
     const upstreams: UpstreamConfig[] = [];
 
     if (this.deepseekKey) {
@@ -125,12 +139,25 @@ export class RealLLMProvider implements LLMProvider {
 
     if (upstreams.length === 0) {
       console.warn('RealLLMProvider requested but no API keys configured. Falling back to Mock.');
-      return this.fallbackMock.streamChat(message);
+      return this.fallbackMock.streamChat(message, options);
     }
 
     let lastError: Error | null = null;
+    const maxTokens = Math.min(options?.maxTokens || DEFAULT_CONFIG.maxTokensCap, DEFAULT_CONFIG.maxTokensCap);
+
+    let promptContent = message;
+    if (options?.files && Object.keys(options.files).length > 0) {
+      const fileContext = Object.entries(options.files)
+        .map(([p, f]) => `--- File: ${p} ---\n${f.content}`)
+        .join('\n\n');
+      promptContent = `${message}\n\n[Existing Workspace Files]:\n${fileContext}`;
+    }
 
     for (const upstream of upstreams) {
+      if (isBudgetExhausted()) {
+        throw new Error('Daily API budget limit ($0.50 USD) exhausted. Further upstream calls aborted.');
+      }
+
       try {
         const response = await fetch(`${upstream.baseUrl}/chat/completions`, {
           method: 'POST',
@@ -141,9 +168,11 @@ export class RealLLMProvider implements LLMProvider {
           body: JSON.stringify({
             model: upstream.model,
             stream: true,
+            stream_options: { include_usage: true },
+            max_tokens: maxTokens,
             messages: [
               { role: 'system', content: SYSTEM_PROMPT },
-              { role: 'user', content: message },
+              { role: 'user', content: promptContent },
             ],
           }),
         });
@@ -178,6 +207,18 @@ export class RealLLMProvider implements LLMProvider {
 
                   try {
                     const parsed = JSON.parse(trimmed.slice(6));
+
+                    // Track spend from usage chunk
+                    if (parsed.usage) {
+                      const promptTok = parsed.usage.prompt_tokens || 0;
+                      const compTok = parsed.usage.completion_tokens || 0;
+                      const isDeepSeek = upstream.baseUrl.includes('deepseek');
+                      const inputRate = isDeepSeek ? 0.30 : 0.30;
+                      const outputRate = isDeepSeek ? 1.20 : 1.00;
+                      const costUSD = (promptTok * inputRate + compTok * outputRate) / 1_000_000;
+                      recordSpendUSD(costUSD);
+                    }
+
                     const delta = parsed.choices?.[0]?.delta?.content;
                     if (delta) {
                       controller.enqueue(encoder.encode(delta));

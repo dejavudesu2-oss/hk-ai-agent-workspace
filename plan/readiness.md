@@ -5,7 +5,7 @@
 | Component | Tested with Mock | Tested with Real API | Tested on Linux | Untested / Known Gaps |
 | :--- | :--- | :--- | :--- | :--- |
 | **Chat API (`/api/chat`)** | ✅ YES (Node `tsx` unit test) | ❌ NO (Blocked: no key) | ❌ NO (Tested only on Windows Node.js) | Live streaming network stalls, real-world connection resets |
-| **Cost Guard & Rate Limiter** | ❌ UNTESTED (Pending T15) | ❌ NO | ❌ NO | Reverse proxy IP spoofing (`X-Forwarded-For`), multi-worker budget race |
+| **Cost Guard & Rate Limiter** | ✅ YES (Rate limit, input cap, max_tokens, $0.50 budget kill switch, invite gate) | ❌ NO | ❌ NO | Reverse proxy IP spoofing behind multi-layer proxies, distributed Redis sync |
 | **Streaming Parser** | ✅ YES (32 unit test cases) | ❌ NO (Pending real stream fixtures) | ❌ NO | Real LLM prose formatting quirks, malformed xml inside markdown |
 | **Live Preview (Bundler + Iframe)** | ✅ YES (HTML generator tests) | ❌ NO | ❌ NO | Real browser iframe messaging, CSS isolation, complex NPM module dependencies |
 | **Sandboxed Execution (`/api/sandbox`)** | ✅ YES (Command filter & Node runner) | N/A | ❌ NO (gVisor `runsc` requires Linux kernel) | Real gVisor `systrap` container runtime, egress iptables allowlist |
@@ -16,4 +16,4 @@
 | **CI / CD Pipeline** | ❌ UNTESTED (Pending T22) | N/A | ❌ NO | GitHub Actions runner execution |
 
 ---
-*Last updated: Iteration 1 (T14 Audit Complete - Deployment mode verified dynamic VPS, npm audit resolved with Next.js 14.2.35)*
+*Last updated: Iteration 2 (T15 Cost Guard Complete - 429/503 limits, rate limiter, $0.50 budget kill switch tested)*
