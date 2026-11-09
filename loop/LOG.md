@@ -338,3 +338,18 @@
   - Average Cost / Task: $0.00238 USD (HK$ 0.0186)
 - **Status**: PASS (Real API parts marked BLOCKED [needs key], scripts and fixtures verified)
 - **Next Task**: T17
+
+## [iter 4] T17
+- **Task**: T17 FIX FROM REAL FAILURES: Fix parser and system prompt for edge cases, add regression tests, re-run fixtures
+- **Commands**:
+  - `npm test`: 42/42 tests passed (4 new regression tests for closing tags, truncation, markdown code fences, and path traversal)
+  - `npx tsx scripts/replay_fixtures.ts`: 10/10 fixtures passed format compliance (100.0%)
+- **Exit Code**: 0
+- **Reviewer Findings & Fixes**:
+  1. Escaped closing tags: Fixed character fragmentation issue by unescaping `<\\/sandbox_action>` at `closeCurrentFile()` rather than per-chunk delta, and added negative lookbehind `(?<!\\)<\/(sandbox_action|boltAction)` so escaped tags inside code never terminate blocks.
+  2. Truncated output: `finish()` now captures truncated files cleanly, flushes remaining buffer, and flags `isTruncated = true`.
+  3. Prose & code fences around blocks: `cleanArtifactTags` now cleans trailing fences ````xml` immediately preceding action tags and leading fences ```` immediately following them.
+  4. Path traversal & drive letters: `normalizePath` strips Windows drive letters (`C:`, `D:`) and NULL/control bytes, resolving relative traversals safely.
+  5. System prompt: Hardened `SYSTEM_PROMPT` in `app/src/lib/llm-provider.ts` with explicit escaping and path rules.
+- **Status**: PASS
+- **Next Task**: T18

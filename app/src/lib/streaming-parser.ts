@@ -11,6 +11,7 @@ export interface ParsedFile {
   path: string;
   content: string;
   isComplete: boolean;
+  isTruncated?: boolean;
 }
 
 export interface StreamParserCallbacks {
@@ -53,6 +54,10 @@ export class StreamingActionParser {
       if (this.buffer.length > 0) {
         this.appendCurrentFile(this.buffer);
         this.buffer = '';
+      }
+      const file = this.files.get(this.currentFilePath);
+      if (file) {
+        file.isTruncated = true;
       }
       this.closeCurrentFile();
     } else if (this.state === 'COMMAND_CONTENT') {
@@ -271,11 +276,13 @@ export class StreamingActionParser {
   private closeCurrentFile(): void {
     if (!this.currentFilePath) return;
     const file = this.files.get(this.currentFilePath);
+    // Unescape escaped closing tags inside code content (<\\/sandbox_action> -> </sandbox_action>)
+    const finalContent = this.currentFileContent.replace(/<\\\/sandbox_action>/gi, '</sandbox_action>');
     if (file) {
       file.isComplete = true;
-      file.content = this.currentFileContent;
+      file.content = finalContent;
     }
-    this.callbacks.onFileEnd?.(this.currentFilePath, this.currentFileContent);
+    this.callbacks.onFileEnd?.(this.currentFilePath, finalContent);
     this.currentFilePath = '';
     this.currentFileContent = '';
   }
@@ -305,7 +312,8 @@ export class StreamingActionParser {
   }
 
   private findClosingTag(text: string): { index: number; length: number } | null {
-    const match = text.match(/<\/(sandbox_action|boltAction)\s*>/i);
+    // Negative lookbehind ensures escaped <\\/sandbox_action> inside code does not close the block
+    const match = text.match(/(?<!\\)<\/(sandbox_action|boltAction)\s*>/i);
     if (match && match.index !== undefined) {
       return { index: match.index, length: match[0].length };
     }
@@ -319,11 +327,15 @@ export class StreamingActionParser {
     const lastSlash = text.lastIndexOf('</');
     if (lastSlash === -1) return -1;
 
+    // Check if the slash was escaped with backslash
+    if (lastSlash > 0 && text[lastSlash - 1] === '\\') {
+      return -1;
+    }
+
     const candidate = text.substring(lastSlash).toLowerCase();
     const closingPrefixes = ['</sandbox_action', '</boltaction'];
 
     const isMatch = closingPrefixes.some((p) => {
-      // Either candidate is a prefix of the tag, or starts with it
       return p.startsWith(candidate) || candidate.startsWith(p);
     });
 
@@ -331,7 +343,12 @@ export class StreamingActionParser {
   }
 
   private cleanArtifactTags(text: string): string {
-    return text.replace(/<\/?boltArtifact[^>]*>/gi, '');
+    let clean = text.replace(/<\/?boltArtifact[^>]*>/gi, '');
+    // Strip trailing markdown code fence lines (e.g. ```xml) immediately preceding action tag
+    clean = clean.replace(/```(?:xml|html|tsx|ts|jsx|js)?\s*$/gi, '');
+    // Strip leading markdown code fence line (e.g. ```) immediately following closing action tag
+    clean = clean.replace(/^\s*```(?:\n|$)/gi, '');
+    return clean;
   }
 
   private extractAttribute(tag: string, attrName: string): string | null {

@@ -18,7 +18,7 @@
 | **T14** | AUDIT: Reconcile 5 architecture contradictions, check npm audit, write /plan/audit.md | `npm run build` lists API routes; audit.md complete; npm audit clean | DONE | 1 |
 | **T15** | COST GUARD: IP rate limit, max input size, max_tokens, daily budget kill switch, invite code on /api/chat | `npm test` asserts 429/503 on limits, real provider blocked when budget exhausted | DONE | 1 |
 | **T16** | REAL MODEL FIXTURES: 10 varied prompts recorded/replayed, measure TTFT and format-compliance rate | `node scripts/replay_fixtures.js` (or ts) logs usage, compliance rate, and failure audit | DONE | 1 |
-| **T17** | FIX FROM REAL FAILURES: Fix parser and system prompt for edge cases, add regression tests | `npm test` passes all parser regression tests | TODO | 0 |
+| **T17** | FIX FROM REAL FAILURES: Fix parser and system prompt for edge cases, add regression tests | `npm test` passes all parser regression tests | DONE | 1 |
 | **T18** | EDIT TURNS: Multi-turn prompt sends file tree + contents, supports search/replace patch action | Multi-turn test asserts only targeted file changed, preview renders | TODO | 0 |
 | **T19** | PERSISTENCE: Autosave VFS & chat to IndexedDB, restore on reload, download zip button | Automated unit test & verified export/import | TODO | 0 |
 | **T20** | FAILOVER TEST: Fake upstream with 429, 503, disconnect, slow stream; failover asserted | Unit test verifies failover, no partial file duplication, clear error reporting | TODO | 0 |

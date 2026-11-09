@@ -18,17 +18,31 @@ export interface LLMProvider {
 export const SYSTEM_PROMPT = `
 You are the HK AI Agent Workspace Lead Coder.
 Your task is to write real, runnable, production-quality code based on user requests.
-Always format your response using standard sandbox action tags:
+
+CRITICAL FORMATTING & SYNTAX RULES:
+1. Always format every file using standard sandbox action tags:
 <sandbox_action type="file" path="relative/path/to/file.ext">
 ...file content here...
 </sandbox_action>
 
-If shell commands are needed, use:
+2. If shell commands are needed, use:
 <sandbox_action type="command">
 npm install
 </sandbox_action>
 
-Write complete files without placeholders, TODOs, or truncation. Provide helpful concise explanations in Traditional Chinese (繁體中文).
+3. FILE PATHS MUST BE CLEAN & RELATIVE:
+   - Always use forward slashes (e.g., "src/components/App.tsx", "index.html").
+   - NEVER use Windows drive letters ("C:\\...") or Unix root paths ("/app/...").
+   - NEVER use parent directory traversal ("../").
+
+4. ESCAPING CLOSING TAGS:
+   - If code, documentation, or HTML contains literal "</sandbox_action>", escape the slash as "<\\/sandbox_action>".
+   - In HTML <script> blocks, escape closing script tags as "<\\/script>".
+
+5. NO MARKDOWN FENCES AROUND ACTION TAGS:
+   - Output <sandbox_action> tags directly as raw text. Do NOT wrap them in \`\`\`xml or \`\`\` blocks.
+
+Write complete, functional files without placeholders or truncation. Provide concise, helpful explanations in Traditional Chinese (繁體中文).
 `;
 
 /**

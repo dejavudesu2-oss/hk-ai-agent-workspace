@@ -25,7 +25,12 @@ export type VFSMap = Record<string, VFSFile>;
  */
 export function normalizePath(rawPath: string): string {
   if (!rawPath) return '';
-  let clean = rawPath.replace(/\\/g, '/').trim();
+  let clean = rawPath.trim();
+  // Strip Windows drive letters (e.g. C:, D:)
+  clean = clean.replace(/^[A-Za-z]:[/\\]*/, '');
+  // Replace backslashes with forward slashes
+  clean = clean.replace(/\\/g, '/');
+  // Strip leading ./ and redundant slashes
   clean = clean.replace(/^(\.\/|\/)+/, '');
   clean = clean.replace(/\/+/g, '/');
   clean = clean.replace(/\/+$/, '');
@@ -40,7 +45,11 @@ export function normalizePath(rawPath: string): string {
       }
       continue;
     }
-    safeParts.push(p);
+    // Remove control characters and NULL bytes
+    const sanitized = p.replace(/[\x00-\x1f\x7f]/g, '').trim();
+    if (sanitized) {
+      safeParts.push(sanitized);
+    }
   }
   return safeParts.join('/');
 }
