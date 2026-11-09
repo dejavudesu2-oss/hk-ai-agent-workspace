@@ -547,3 +547,63 @@
 - **Status**: PASS
 - **Next Task**: T34
 
+## [iter 1] T34
+- **Task**: T34 SECRETS SCAN WITH NEGATIVE CONTROL: Negative control test with fake sk- and Authorization line; git history and /app/fixtures scanned; personal paths flagged
+- **Commands**:
+  - `node scripts/secrets_scan.js`: Exit 0
+  - Negative control test: created `temp_negative_control.txt` with synthetic sk- key and synthetic Authorization Bearer line; scanner caught both violations and failed with exit 1; file deleted; scanner re-run passed with exit 0.
+- **Exit Code**: 0
+- **Findings & Fixes**:
+  1. Negative control proven: Scanner caught fake `sk-` key and fake `Authorization: Bearer` line in untracked file; deletion cleanly restored PASS status.
+  2. Confirmed Git root is project workspace directory.
+  3. Confirmed `.env`, `node_modules`, and `.next` are strictly untracked.
+  4. Scanned 128 workspace files, untracked files, `/app/fixtures` (mock and real), and entire git commit history (`git log -p`) with 0 leaks detected.
+  5. Scanned `loop/LOG.md` and `/app/fixtures` for personal path (Windows username): 0 occurrences detected. Removed absolute personal path from `plan/ci.md`.
+- **Status**: PASS
+- **Next Task**: T35
+
+## [iter 1] T35
+- **Task**: T35 BROWSER PROOF: Install Playwright (pinned version >= 2 weeks ago), e2e test against `npm run dev` (streaming, preview iframe, todo item, storage shim, cookie/parent isolation, CSP/sandbox audit, parent event.source check, screenshots saved)
+- **Commands**:
+  - `npm install --save-dev @playwright/test@1.64.0`: Installed Playwright pinned to 1.64.0 (published over 4 weeks ago)
+  - `npx playwright install chromium`: Downloaded Chromium 156.0.8078.4 (v1248) and winldd
+  - `node scripts/browser_proof.js`: Exit 0 (all 5 core test areas 100% verified)
+- **Exit Code**: 0
+- **Findings & Fixes**:
+  1. Mock todo app streamed into editor, preview iframe compiled, and user interaction succeeded: successfully added item "飲茶買蛋撻 (Hong Kong Milk Tea & Egg Tart)" inside iframe.
+  2. In-memory storage shim verified: sandboxed code accessed `localStorage` without SecurityError.
+  3. Parent security isolation verified: sandboxed code was blocked from reading `window.parent.document.cookie` (SecurityError), `window.parent.localStorage` (SecurityError), and backend `/api/chat` route (403 Forbidden on `Origin: "null"`).
+  4. Exact sandbox attribute: `sandbox="allow-scripts allow-modals allow-forms"` (strictly omits `allow-same-origin`).
+  5. Exact CSP: `default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdn.tailwindcss.com https://unpkg.com; img-src * data: blob:; connect-src *;`. 'unsafe-eval' is in use (required for Babel Standalone JSX compilation); 'unsafe-inline' is in use (required for dynamic inlined styles and scripts in preview). Zero CSP console violations detected.
+  6. Parent postMessage handler strictly ignored spoofed messages from external window, and accepted genuine watchdog error from preview iframe contentWindow.
+  7. Saved 5 high-resolution screenshots to `/app/e2e/screenshots/`.
+- **Status**: PASS
+- **Next Task**: T36
+
+## [iter 1] T36
+- **Task**: T36 REAL RUN (key required): DeepSeek model check, non-reasoning chat model, 30 varied prompts recorded with sidecars, compliance k/30, patch k/5, TTFT p50/p95, spend ledger
+- **Commands**:
+  - Checked current DeepSeek models from official docs (`https://api-docs.deepseek.com` and `https://api-docs.deepseek.com/guides/reasoning_model` [verified: URL])
+  - `npx tsx --test src/__tests__/reasoning-model.test.ts` (in `app`): Exit 0 (verified parser & provider ignore `delta.reasoning_content`)
+  - Checked API key presence: `process.env.DEEPSEEK_API_KEY` is undefined; `.env` is absent.
+- **Exit Code**: 0 (Tests pass; live run blocked)
+- **Findings & Fixes**:
+  1. Current DeepSeek models verified: chat model is `deepseek-chat` (DeepSeek-V3 non-reasoning); reasoning model is `deepseek-reasoner` (DeepSeek-R1).
+  2. Reasoning model stream isolation verified: automated unit test asserts `delta.reasoning_content` is ignored, and only code blocks in `delta.content` are parsed into VFS.
+  3. Real API execution marked `BLOCKED [needs key]` due to missing API key. All 30 prompts and sidecar recording logic are prepared in `scripts/record_real_fixtures.ts`.
+  4. Spend ledger total: $0.00 USD (0 live upstream calls made; budget cap $0.50 intact).
+  5. Key destination: `.env` file in repository root (`hk-ai-agent-workspace/.env`) with variable `DEEPSEEK_API_KEY=<your_key>`.
+- **Status**: BLOCKED [needs key]
+- **Next Task**: T37
+
+## [iter 1] T37
+- **Task**: T37 COST AND BREAKEVEN v4: Replace assumed token counts with T36 usage numbers, re-run scenario and sensitivity tables, old vs new, paying users at HK$158
+- **Commands**:
+  - `node scripts/breakeven_v3.js`: Exit 0
+- **Exit Code**: 0
+- **Findings & Fixes**:
+  1. Marked `BLOCKED [needs key]` because T37 depends on live measured token counts from T36.
+  2. Existing audited model in `/plan/cost.md` and `/plan/breakeven_v3.md` stands: Pro tier HK$158/mo ($20.256 USD/mo), Stripe HK fee 3.4% + HK$2.35 (net HK$150.28 / $19.266 USD), fixed OpEx $50 USD/mo (HK$390). Breakeven at base 3% conversion / 5 free tasks/day is 7 paying users (supporting 226 free users).
+- **Status**: BLOCKED [needs key]
+- **Next Task**: NONE (Queue Finished, STATUS: STOPPED)
+
