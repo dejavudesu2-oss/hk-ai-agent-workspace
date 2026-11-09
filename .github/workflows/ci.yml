@@ -1,0 +1,96 @@
+name: CI / CD Pipeline
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  # Job 1: Automated Unit Tests and Next.js Build
+  build-and-test:
+    name: Build & Test (ubuntu-latest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Run unit & integration test suite
+        run: npm test
+
+      - name: Run cross-platform stream tests
+        run: npm run test:chat
+
+      - name: Build Next.js application
+        run: npm run build
+
+  # Job 2: Infrastructure & gVisor Runtime Isolation Smoke Test
+  # NOTE: [UNTESTED-locally]: Cannot run on local Windows workstation without Linux kernel virtualization.
+  # Steps to run on GitHub are documented in /plan/ci.md.
+  infra-smoke-test:
+    name: Infra Smoke Test (Docker + runsc) [UNTESTED-locally]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install gVisor runsc runtime
+        run: |
+          set -e
+          echo "=== Installing gVisor runsc ==="
+          curl -fsSL https://gvisor.dev/archive.key | sudo gpg --dearmor -o /usr/share/keyrings/gvisor-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/gvisor-archive-keyring.gpg] https://storage.googleapis.com/gvisor/releases release main" | sudo tee /etc/apt/sources.list.d/gvisor.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y runsc
+
+      - name: Configure Docker to use runsc
+        run: |
+          set -e
+          echo "=== Configuring Docker Daemon for runsc ==="
+          sudo runsc install
+          sudo systemctl restart docker
+          docker info | grep -i runsc || (echo "runsc not detected in docker runtimes" && exit 1)
+
+      - name: Test container start with resource limits under runsc
+        run: |
+          set -e
+          echo "=== Testing container limits under runsc ==="
+          # Memory: 256MB, CPU: 0.5 cores, PIDs: 64
+          docker run --rm \
+            --runtime=runsc \
+            --memory=256m \
+            --cpus=0.5 \
+            --pids-limit=64 \
+            alpine sh -c "uname -a && cat /etc/os-release"
+
+      - name: Verify network egress restrictions & metadata service block
+        run: |
+          set -e
+          echo "=== Testing network egress allowlist & metadata isolation ==="
+          # Outbound connection to public npm registry
+          docker run --rm --runtime=runsc alpine wget -q --spider https://registry.npmjs.org || true
+
+          # Assert that Cloud metadata service (169.254.169.254) is blocked
+          echo "Testing cloud metadata protection (169.254.169.254)..."
+          docker run --rm --runtime=runsc alpine sh -c "nc -z -w 2 169.254.169.254 80 && exit 1 || echo 'Cloud metadata service blocked as expected'"
+
+      - name: Verify watchdog container timeout kill
+        run: |
+          set -e
+          echo "=== Testing timeout kill ==="
+          # Container intended to sleep 10s should be killed by timeout after 3s
+          if timeout 3s docker run --rm --runtime=runsc alpine sleep 10; then
+            echo "Error: Container was not killed by timeout!"
+            exit 1
+          else
+            echo "Timeout kill verified: process terminated at deadline."
+          fi

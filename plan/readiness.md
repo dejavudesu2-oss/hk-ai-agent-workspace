@@ -13,7 +13,7 @@
 | **Edit Turns & Patch Parser** | ✅ YES (Search/replace patch engine, strict 1-match invariant, multi-turn Todo edit tested) | ❌ NO | ❌ NO | Whitespace tolerance fuzzy matching, multi-file merge conflict |
 | **Persistence (IndexedDB / Zip)** | ✅ YES (IndexedDB autosave/restore + JSZip package download verified) | N/A | ❌ NO | Browser quota eviction under low disk, multi-tab IndexedDB locking |
 | **Provider Failover** | ✅ YES (Simulated 429, 503, slow stream timeout, mid-stream disconnect, dual-failure tested) | ❌ NO | ❌ NO | Live TCP RST resets from Chinese/HK border transit, real ISP throttling |
-| **CI / CD Pipeline** | ❌ UNTESTED (Pending T22) | N/A | ❌ NO | GitHub Actions runner execution |
+| **CI / CD Pipeline** | ✅ YES (Job 1: npm test + build verified) | N/A | ⚠️ Job 2 UNTESTED-locally (Marked in ci.yml; exact steps in plan/ci.md) | GitHub runner network limits, gVisor systrap apt mirror availability |
 
 ---
-*Last updated: Iteration 8 (T21 Preview Security Complete - CSP, sandbox opaque origin, in-memory storage shim, event.source verification tested; manual E2E protocol documented)*
+*Last updated: Iteration 9 (T22 Cross-Platform + CI Complete - curl.exe replaced with Node fetch, path normalization tested, .github/workflows/ci.yml created)*

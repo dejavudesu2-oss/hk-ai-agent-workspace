@@ -5,6 +5,7 @@ import {
   EGRESS_ALLOWLIST,
   RESOURCE_LIMITS,
 } from '@/lib/docker-sandbox';
+import { normalizePath } from '@/lib/vfs';
 
 export const runtime = 'nodejs';
 
@@ -18,6 +19,20 @@ export async function POST(req: NextRequest) {
     }
 
     const trimmed = command.trim();
+
+    // Sanitize files map with path normalization against backslashes, absolute paths, and traversals
+    const sanitizedFiles: Record<string, { path: string; content: string }> = {};
+    if (files && typeof files === 'object') {
+      for (const [key, val] of Object.entries(files)) {
+        const safePath = normalizePath(key || (val as any)?.path);
+        if (safePath) {
+          sanitizedFiles[safePath] = {
+            path: safePath,
+            content: typeof (val as any)?.content === 'string' ? (val as any).content : '',
+          };
+        }
+      }
+    }
 
     // 1. Syscall & AST Security Filter: Guard against destructive commands
     const dangerousPatterns = [
@@ -53,7 +68,7 @@ export async function POST(req: NextRequest) {
     const hasDockerGVisor = await isDockerGVisorAvailable();
 
     if (hasDockerGVisor) {
-      const result = await executeInGVisor({ command: trimmed, files });
+      const result = await executeInGVisor({ command: trimmed, files: sanitizedFiles });
       return NextResponse.json({
         ...result,
         limits: RESOURCE_LIMITS,
@@ -66,7 +81,7 @@ export async function POST(req: NextRequest) {
     const exitCode = 0;
 
     if (trimmed.startsWith('npm install') || trimmed.startsWith('pnpm install')) {
-      const fileCount = files ? Object.keys(files).length : 0;
+      const fileCount = Object.keys(sanitizedFiles).length;
       stdout =
         `[gVisor sandbox] Resolving dependencies from package.json...\n` +
         `[gVisor sandbox] Indexed ${fileCount} workspace files in virtual layer\n` +

@@ -43,9 +43,9 @@ export class StreamingActionParser {
     this.callbacks = callbacks;
     if (initialFiles) {
       if (initialFiles instanceof Map) {
-        for (const [k, v] of initialFiles.entries()) {
+        initialFiles.forEach((v, k) => {
           this.files.set(k, { ...v });
-        }
+        });
       } else {
         for (const [k, v] of Object.entries(initialFiles)) {
           this.files.set(k, { path: v.path || k, content: v.content || '', isComplete: true });

@@ -405,3 +405,18 @@
 - **Status**: PASS
 - **Next Task**: T22
 
+## [iter 9] T22
+- **Task**: T22 CROSS-PLATFORM + CI: Replace curl.exe with Node fetch, backslash/traversal tests, GitHub Actions CI
+- **Commands**:
+  - `npm run test:chat`: Verified Node fetch streams SSE chunks without Windows-specific curl.exe
+  - `npm test`: 61/61 tests passed (3 new dedicated path normalization tests)
+  - `npm run build`: Exit 0 (Next.js 14.2.35 production build compiled and validated type safety)
+- **Exit Code**: 0
+- **Reviewer Findings & Fixes**:
+  1. Replaced `curl.exe` child process spawn in `scripts/test_chat_stream.js` with cross-platform native Node `fetch`, decoding SSE chunks via `ReadableStreamDefaultReader` and removing Windows shell dependencies.
+  2. Fixed TypeScript `MapIterator` downlevelIteration compiler error in `StreamingActionParser` constructor by switching from `for..of initialFiles.entries()` to `initialFiles.forEach()`.
+  3. Hardened `docker-sandbox.ts` and `app/src/app/api/sandbox/route.ts` against directory traversal by applying `normalizePath` to workspace file keys and strictly verifying that resolved filesystem targets reside within the allocated temporary directory.
+  4. Created `.github/workflows/ci.yml` defining Job 1 (`build-and-test` on `ubuntu-latest`) and Job 2 (`infra-smoke-test` on `ubuntu-latest` with Docker + gVisor `runsc`). Job 2 is explicitly marked `UNTESTED-locally` with detailed setup and execution steps documented in `/plan/ci.md`.
+- **Status**: PASS
+- **Next Task**: T23
+

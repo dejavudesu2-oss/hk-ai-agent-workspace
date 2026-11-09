@@ -3,6 +3,7 @@ import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { normalizePath } from './vfs';
 
 const execAsync = promisify(exec);
 
@@ -70,8 +71,16 @@ export async function executeInGVisor(
   if (options.files && Object.keys(options.files).length > 0) {
     try {
       tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hk-sandbox-'));
+      const resolvedTempDir = path.resolve(tempDir);
       for (const [filePath, file] of Object.entries(options.files)) {
-        const dest = path.join(tempDir, filePath);
+        const safeRelativePath = normalizePath(filePath || file.path);
+        if (!safeRelativePath) continue;
+        const dest = path.resolve(resolvedTempDir, safeRelativePath);
+        // Strictly prevent escaping out of tempDir
+        if (!dest.startsWith(resolvedTempDir + path.sep)) {
+          console.warn(`Prevented directory traversal attempt in sandbox files: ${filePath}`);
+          continue;
+        }
         fs.mkdirSync(path.dirname(dest), { recursive: true });
         fs.writeFileSync(dest, file.content || '');
       }

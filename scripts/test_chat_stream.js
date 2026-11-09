@@ -71,10 +71,9 @@ async function testMockStreamChunks() {
   console.log('✓ Stream successfully emitted SSE chunks with complete files.\n');
 }
 
-async function testCurlStream() {
-  console.log('--- Test 3: Actual curl to the endpoint streams chunks ---');
+async function testNodeFetchStream() {
+  console.log('--- Test 3: Cross-platform Node fetch to the endpoint streams chunks ---');
   const http = require('http');
-  const { spawn } = require('child_process');
   const { POST: chatHandler } = require('../app/src/app/api/chat/route');
 
   const server = http.createServer(async (req, res) => {
@@ -117,59 +116,50 @@ async function testCurlStream() {
   const port = server.address().port;
   console.log(`Endpoint listening on http://127.0.0.1:${port}/api/chat`);
 
-  const curlPromise = new Promise((resolve, reject) => {
-    const curl = spawn('curl.exe', [
-      '-N',
-      '-s',
-      '-X',
-      'POST',
-      `http://127.0.0.1:${port}/api/chat`,
-      '-H',
-      'Content-Type: application/json',
-      '-d',
-      JSON.stringify({ message: 'build me a todo app' }),
-    ]);
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'build me a todo app' }),
+    });
 
+    if (res.status !== 200) {
+      throw new Error(`Expected HTTP 200 from fetch, got ${res.status}`);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
     let chunks = 0;
     let totalBytes = 0;
     let output = '';
 
-    curl.stdout.on('data', (d) => {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
       chunks++;
-      totalBytes += d.length;
-      output += d.toString();
-    });
+      totalBytes += value.length;
+      output += decoder.decode(value, { stream: true });
+    }
 
-    curl.stderr.on('data', (err) => {
-      console.error('curl stderr:', err.toString());
-    });
-
-    curl.on('close', (code) => {
-      server.close();
-      if (code !== 0) {
-        return reject(new Error(`curl exited with code ${code}`));
-      }
-      resolve({ chunks, totalBytes, output });
-    });
-  });
-
-  const result = await curlPromise;
-  console.log(`curl received ${result.chunks} streaming chunks (${result.totalBytes} bytes)`);
-  if (result.chunks < 5) {
-    throw new Error(`Expected curl to receive multiple stream chunks, got ${result.chunks}`);
+    console.log(`Node fetch received ${chunks} streaming chunks (${totalBytes} bytes)`);
+    if (chunks < 5) {
+      throw new Error(`Expected fetch to receive multiple stream chunks, got ${chunks}`);
+    }
+    if (!output.includes('香港 AI 待辦清單') || !output.includes('todoInput')) {
+      throw new Error('Fetch output missing expected todo app contents');
+    }
+    console.log('✓ Cross-platform Node fetch successfully connected and streamed chunks from endpoint.\n');
+  } finally {
+    server.close();
   }
-  if (!result.output.includes('香港 AI 待辦清單') || !result.output.includes('todoInput')) {
-    throw new Error('curl output missing expected todo app contents');
-  }
-  console.log('✓ curl command successfully connected and streamed chunks from endpoint.\n');
 }
 
 async function main() {
   try {
     await testProviderSelection();
     await testMockStreamChunks();
-    await testCurlStream();
-    console.log('✅ T04 Acceptance Test PASSED: Mock LLM streams SSE chunks, provider adapter switches via env, and curl streams chunks.');
+    await testNodeFetchStream();
+    console.log('✅ T04 Acceptance Test PASSED: Mock LLM streams SSE chunks, provider adapter switches via env, and cross-platform fetch streams chunks.');
     process.exit(0);
   } catch (err) {
     console.error('❌ T04 Acceptance Test FAILED:', err);

@@ -10,10 +10,10 @@
     "build": "npm --workspace=app run build",
     "start": "npm --workspace=app run start",
     "test": "npm --workspace=app run test",
-    "test:chat": "node app/node_modules/tsx/dist/cli.mjs scripts/test_chat_stream.js",
-    "test:vfs": "node app/node_modules/tsx/dist/cli.mjs scripts/test_vfs_stream.js",
+    "test:chat": "npx tsx scripts/test_chat_stream.js",
+    "test:vfs": "npx tsx scripts/test_vfs_stream.js",
     "bench:density": "node bench/container_density.js",
-    "bench:load": "node app/node_modules/tsx/dist/cli.mjs bench/loadtest.js",
-    "test:e2e": "node app/node_modules/tsx/dist/cli.mjs scripts/e2e_test.js"
+    "bench:load": "npx tsx bench/loadtest.js",
+    "test:e2e": "npx tsx scripts/e2e_test.js"
   }
 }
