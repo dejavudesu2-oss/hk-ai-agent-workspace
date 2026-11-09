@@ -1,0 +1,24 @@
+已為您生成香港地鐵港鐵 (MTR) 票價與時間計算器：
+
+<sandbox_action type="file" path="mtr\data\stations.json">
+{
+  "stations": ["中環", "金鐘", "尖沙咀", "旺角", "銅鑼灣"]
+}
+</sandbox_action>
+
+<sandbox_action type="file" path="index.html">
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>港鐵票價查詢</title></head>
+<body>
+  <h2>港鐵 (MTR) 票價與行程時間估算</h2>
+  <div id="mtr-app"></div>
+  <script src="mtr.js"></script>
+</body>
+</html>
+</sandbox_action>
+
+<sandbox_action type="file" path="mtr.js">
+const fares = { "中環-尖沙咀": 11.2, "金鐘-銅鑼灣": 6.3 };
+console.log("MTR Calculator Ready");
+</sandbox_action>

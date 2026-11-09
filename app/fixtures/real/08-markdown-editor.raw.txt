@@ -1,0 +1,19 @@
+<sandbox_action type="file" path="index.html">
+<!DOCTYPE html>
+<html>
+<body>
+  <textarea id="editor"># 歡迎使用 Markdown 編輯器
+
+輸入 <tag> 不會干擾解析器。</textarea>
+  <div id="preview"></div>
+  <script src="editor.js"></script>
+</body>
+</html>
+</sandbox_action>
+
+<sandbox_action type="file" path="editor.js">
+const editor = document.getElementById('editor');
+editor.addEventListener('input', () => {
+  document.getElementById('preview').innerText = editor.value;
+});
+</sandbox_action>

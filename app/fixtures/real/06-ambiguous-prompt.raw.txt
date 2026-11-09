@@ -1,0 +1,8 @@
+為您建立極簡高流暢頁面：
+
+<sandbox_action type="file" path="index.html">
+<!DOCTYPE html>
+<html><body style="background:#0b0f19;color:#38bdf8;font-family:sans-serif;display:grid;place-content:center;height:100vh;">
+  <h1>✨ 極致速度與現代美學</h1>
+</body></html>
+</sandbox_action>

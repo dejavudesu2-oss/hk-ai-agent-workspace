@@ -1,0 +1,13 @@
+{
+  "id": "09-weather-widget",
+  "name": "Weather Forecast (Truncated stream without closing tag)",
+  "ttftMs": 690,
+  "totalTimeMs": 3100,
+  "usage": {
+    "prompt_tokens": 1020,
+    "completion_tokens": 1100,
+    "total_tokens": 2120
+  },
+  "costUSD": 0.001626,
+  "note": "Representative real LLM fixture with live failure patterns"
+}

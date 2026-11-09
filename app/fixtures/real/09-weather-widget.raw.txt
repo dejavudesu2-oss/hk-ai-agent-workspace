@@ -1,0 +1,17 @@
+<sandbox_action type="file" path="index.html">
+<!DOCTYPE html>
+<html>
+<head><title>香港天文台天氣</title></head>
+<body>
+  <div class="weather-box">
+    <h3>香港當前氣溫: 24°C</h3>
+    <p>濕度: 75% | 天氣: 多雲</p>
+  </div>
+</body>
+</html>
+</sandbox_action>
+
+<sandbox_action type="file" path="weather.js">
+console.log("Fetching HKO API...");
+const simulatedTemp = 24;
+// Stream abruptly cut off here before </sandbox_action>

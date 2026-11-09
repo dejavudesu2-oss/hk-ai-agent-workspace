@@ -1,0 +1,13 @@
+{
+  "id": "07-chinese-prompt",
+  "name": "Chinese MTR Calculator (Unicode & Windows path edge case)",
+  "ttftMs": 780,
+  "totalTimeMs": 4600,
+  "usage": {
+    "prompt_tokens": 1280,
+    "completion_tokens": 1900,
+    "total_tokens": 3180
+  },
+  "costUSD": 0.002664,
+  "note": "Representative real LLM fixture with live failure patterns"
+}

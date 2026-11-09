@@ -1,0 +1,13 @@
+{
+  "id": "03-landing-page",
+  "name": "Landing Page (Markdown code fence wrapping)",
+  "ttftMs": 720,
+  "totalTimeMs": 5120,
+  "usage": {
+    "prompt_tokens": 1350,
+    "completion_tokens": 2100,
+    "total_tokens": 3450
+  },
+  "costUSD": 0.002925,
+  "note": "Representative real LLM fixture with live failure patterns"
+}

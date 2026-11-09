@@ -1,0 +1,23 @@
+<sandbox_action  type = "file"   path = "index.html" >
+<!DOCTYPE html>
+<html>
+<head><title>Kanban</title><link rel="stylesheet" href="kanban.css"></head>
+<body>
+  <div class="board">
+    <div class="col" id="todo"><h3>待辦</h3></div>
+    <div class="col" id="doing"><h3>進行中</h3></div>
+    <div class="col" id="done"><h3>已完成</h3></div>
+  </div>
+  <script src="kanban.js"></script>
+</body>
+</html>
+</sandbox_action>
+
+<sandbox_action type="file" path="kanban.css">
+.board { display: flex; gap: 16px; }
+.col { flex: 1; background: #1e293b; padding: 12px; border-radius: 8px; }
+</sandbox_action>
+
+<sandbox_action type="file" path="kanban.js">
+console.log("Kanban loaded");
+</sandbox_action>

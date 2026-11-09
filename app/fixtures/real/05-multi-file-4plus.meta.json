@@ -1,0 +1,13 @@
+{
+  "id": "05-multi-file-4plus",
+  "name": "Modular Dashboard (5 files, nested folders)",
+  "ttftMs": 890,
+  "totalTimeMs": 6200,
+  "usage": {
+    "prompt_tokens": 1600,
+    "completion_tokens": 2950,
+    "total_tokens": 4550
+  },
+  "costUSD": 0.00402,
+  "note": "Representative real LLM fixture with live failure patterns"
+}

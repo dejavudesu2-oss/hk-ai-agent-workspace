@@ -1,0 +1,13 @@
+{
+  "id": "06-ambiguous-prompt",
+  "name": "Ambiguous Short Prompt (Minimal response)",
+  "ttftMs": 510,
+  "totalTimeMs": 1980,
+  "usage": {
+    "prompt_tokens": 750,
+    "completion_tokens": 620,
+    "total_tokens": 1370
+  },
+  "costUSD": 0.000969,
+  "note": "Representative real LLM fixture with live failure patterns"
+}

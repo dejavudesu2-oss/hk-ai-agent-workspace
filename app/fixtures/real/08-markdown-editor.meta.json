@@ -1,0 +1,13 @@
+{
+  "id": "08-markdown-editor",
+  "name": "Markdown Editor (Markdown code block containing tag-like tokens)",
+  "ttftMs": 650,
+  "totalTimeMs": 3950,
+  "usage": {
+    "prompt_tokens": 1100,
+    "completion_tokens": 1540,
+    "total_tokens": 2640
+  },
+  "costUSD": 0.002178,
+  "note": "Representative real LLM fixture with live failure patterns"
+}

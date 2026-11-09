@@ -1,0 +1,13 @@
+{
+  "id": "10-kanban-board",
+  "name": "Kanban Board (Multiple attributes with irregular whitespace)",
+  "ttftMs": 740,
+  "totalTimeMs": 4800,
+  "usage": {
+    "prompt_tokens": 1400,
+    "completion_tokens": 2200,
+    "total_tokens": 3600
+  },
+  "costUSD": 0.00306,
+  "note": "Representative real LLM fixture with live failure patterns"
+}

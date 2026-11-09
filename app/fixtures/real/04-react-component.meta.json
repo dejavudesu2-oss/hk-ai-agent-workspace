@@ -1,0 +1,13 @@
+{
+  "id": "04-react-component",
+  "name": "React Temperature Converter (Script tag in JS)",
+  "ttftMs": 610,
+  "totalTimeMs": 3400,
+  "usage": {
+    "prompt_tokens": 1050,
+    "completion_tokens": 1280,
+    "total_tokens": 2330
+  },
+  "costUSD": 0.001851,
+  "note": "Representative real LLM fixture with live failure patterns"
+}

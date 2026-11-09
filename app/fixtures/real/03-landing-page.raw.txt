@@ -1,0 +1,13 @@
+```xml
+<sandbox_action type="file" path="index.html">
+<!DOCTYPE html>
+<html>
+<head><title>AI Platform</title></head>
+<body><header><h1>Next Gen AI Agent</h1></header></body>
+</html>
+</sandbox_action>
+
+<sandbox_action type="file" path="styles.css">
+header { padding: 40px; text-align: center; }
+</sandbox_action>
+```

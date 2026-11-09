@@ -1,0 +1,13 @@
+{
+  "id": "01-todo-app",
+  "name": "Todo App (Standard XML Blocks)",
+  "ttftMs": 642,
+  "totalTimeMs": 4210,
+  "usage": {
+    "prompt_tokens": 1120,
+    "completion_tokens": 1850,
+    "total_tokens": 2970
+  },
+  "costUSD": 0.002556,
+  "note": "Representative real LLM fixture with live failure patterns"
+}

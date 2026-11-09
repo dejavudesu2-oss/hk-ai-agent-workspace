@@ -1,0 +1,20 @@
+<sandbox_action type="file" path="index.html">
+<html><body><div id="root"></div><script src="src/app.js"></script></body></html>
+</sandbox_action>
+
+<sandbox_action type="file" path="src/styles.css">
+.card { border: 1px solid #334155; padding: 12px; }
+</sandbox_action>
+
+<sandbox_action type="file" path="src/store.js">
+export const store = { data: [10, 20, 30] };
+</sandbox_action>
+
+<sandbox_action type="file" path="src/charts.js">
+export function renderChart() { return "chart rendered"; }
+</sandbox_action>
+
+<sandbox_action type="file" path="src/app.js">
+import { store } from './store.js';
+console.log("App ready", store);
+</sandbox_action>

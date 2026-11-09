@@ -1,0 +1,26 @@
+好的！這是一個完整的待辦事項應用程式。
+
+<sandbox_action type="file" path="index.html">
+<!DOCTYPE html>
+<html>
+<head><title>Todo App</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+  <div id="app">
+    <h1>香港 Todo List</h1>
+    <input id="new-todo" placeholder="新增待辦...">
+    <ul id="list"></ul>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
+</sandbox_action>
+
+<sandbox_action type="file" path="styles.css">
+body { font-family: system-ui, sans-serif; background: #0f172a; color: white; padding: 20px; }
+.done { text-decoration: line-through; opacity: 0.6; }
+</sandbox_action>
+
+<sandbox_action type="file" path="app.js">
+const list = document.getElementById('list');
+console.log("Loaded todo app");
+</sandbox_action>

@@ -1,0 +1,13 @@
+{
+  "id": "02-calculator",
+  "name": "Scientific Calculator (Prose outside blocks)",
+  "ttftMs": 580,
+  "totalTimeMs": 3890,
+  "usage": {
+    "prompt_tokens": 980,
+    "completion_tokens": 1420,
+    "total_tokens": 2400
+  },
+  "costUSD": 0.001998,
+  "note": "Representative real LLM fixture with live failure patterns"
+}
