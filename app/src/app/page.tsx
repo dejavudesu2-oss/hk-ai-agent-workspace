@@ -22,6 +22,7 @@ export default function WorkspacePage() {
   ]);
 
   const [files, setFiles] = useState<VFSMap>({});
+  const [previewFiles, setPreviewFiles] = useState<VFSMap>({});
   const [activeFile, setActiveFile] = useState<string>('');
   const [openFiles, setOpenFiles] = useState<string[]>([]);
   const [logs, setLogs] = useState<string[]>([
@@ -41,6 +42,7 @@ export default function WorkspacePage() {
       .then((snapshot) => {
         if (snapshot && snapshot.files && Object.keys(snapshot.files).length > 0) {
           setFiles(snapshot.files);
+          setPreviewFiles(snapshot.files);
           if (snapshot.messages && snapshot.messages.length > 0) {
             setMessages(snapshot.messages);
           }
@@ -83,10 +85,11 @@ export default function WorkspacePage() {
 
   const handleFileChange = useCallback((newContent: string) => {
     if (!activeFile) return;
-    setFiles((prev) => ({
-      ...prev,
+    const updated = {
       [activeFile]: { path: activeFile, content: newContent },
-    }));
+    };
+    setFiles((prev) => ({ ...prev, ...updated }));
+    setPreviewFiles((prev) => ({ ...prev, ...updated }));
   }, [activeFile]);
 
   const handleSendMessage = async (prompt: string) => {
@@ -160,6 +163,10 @@ export default function WorkspacePage() {
               ...prev,
               [filePath]: { path: filePath, content: totalContent },
             }));
+            setPreviewFiles((prev) => ({
+              ...prev,
+              [filePath]: { path: filePath, content: totalContent },
+            }));
             addLog(`[file] Completed file: ${filePath}`);
           },
           onFilePatch: (filePath, _s, _r, success, error) => {
@@ -167,6 +174,10 @@ export default function WorkspacePage() {
               const patchedContent = parser.getFiles().get(filePath)?.content || '';
               currentFiles[filePath] = { path: filePath, content: patchedContent };
               setFiles((prev) => ({
+                ...prev,
+                [filePath]: { path: filePath, content: patchedContent },
+              }));
+              setPreviewFiles((prev) => ({
                 ...prev,
                 [filePath]: { path: filePath, content: patchedContent },
               }));
@@ -202,6 +213,7 @@ export default function WorkspacePage() {
       }
 
       parser.finish();
+      setPreviewFiles({ ...currentFiles });
       addLog('[system] Stream parsing finished successfully. Live preview updated.');
     } catch (err: any) {
       console.error(err);
@@ -286,7 +298,7 @@ export default function WorkspacePage() {
 
       {/* 4. Right: Live Sandbox Preview */}
       <div className="w-[45%] h-full min-w-[380px]">
-        <LivePreview files={files} onFixError={handleFixError} />
+        <LivePreview files={previewFiles} onFixError={handleFixError} />
       </div>
     </main>
   );

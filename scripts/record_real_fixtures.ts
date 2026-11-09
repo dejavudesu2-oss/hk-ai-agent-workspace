@@ -6,11 +6,31 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import net from 'node:net';
 import { performance } from 'node:perf_hooks';
+import { SYSTEM_PROMPT } from '../app/src/lib/llm-provider';
 
 const FIXTURES_REAL_DIR = path.resolve(__dirname, '../app/fixtures/real');
 const FIXTURES_MOCK_DIR = path.resolve(__dirname, '../app/fixtures/mock');
 const MAX_BUDGET_USD = 0.50;
+
+function measureTcpConnectTime(host: string, port = 443): Promise<number> {
+  return new Promise((resolve) => {
+    const start = performance.now();
+    const socket = net.createConnection({ host, port }, () => {
+      const tcpTime = performance.now() - start;
+      socket.destroy();
+      resolve(Math.round(tcpTime));
+    });
+    socket.on('error', () => {
+      resolve(0);
+    });
+    socket.setTimeout(3000, () => {
+      socket.destroy();
+      resolve(0);
+    });
+  });
+}
 
 interface PromptFixtureDef {
   id: string;
@@ -244,11 +264,26 @@ async function main() {
       }
 
       console.log(`\nRecording prompt [${item.id}] ${item.name}...`);
+      
+      // Measure separate TCP connect time to DeepSeek API
+      const tcpConnectMs = await measureTcpConnectTime('api.deepseek.com', 443);
+
+      let promptContent = item.prompt;
+      // For edit turns 26-30, supply the initial Todo app code context so model can produce valid search/replace patches
+      if (item.id.startsWith('26') || item.id.startsWith('27') || item.id.startsWith('28') || item.id.startsWith('29') || item.id.startsWith('30')) {
+        const mockTodoPath = path.join(FIXTURES_MOCK_DIR, '01-todo-app.raw.txt');
+        if (fs.existsSync(mockTodoPath)) {
+          const baseAppCode = fs.readFileSync(mockTodoPath, 'utf-8');
+          promptContent = `${item.prompt}\n\n[Existing Application Context for Patching]:\n${baseAppCode}`;
+        }
+      }
+
       const startTime = performance.now();
       let ttft = 0;
       let rawStream = '';
       let usage: any = null;
       let sseRequestId = '';
+      let responseModel = 'deepseek-chat';
 
       try {
         const response = await fetch('https://api.deepseek.com/chat/completions', {
@@ -265,10 +300,9 @@ async function main() {
             messages: [
               {
                 role: 'system',
-                content:
-                  'You are the HK AI Agent Workspace coder. Output files inside <sandbox_action type="file" path="...">...</sandbox_action>.',
+                content: SYSTEM_PROMPT,
               },
-              { role: 'user', content: item.prompt },
+              { role: 'user', content: promptContent },
             ],
           }),
         });
@@ -294,13 +328,14 @@ async function main() {
 
           rawStream += chunkText;
 
-          // Parse usage and id
+          // Parse usage, id, and model from response chunks
           const lines = chunkText.split('\n');
           for (const line of lines) {
             if (line.startsWith('data: ') && line !== 'data: [DONE]') {
               try {
                 const p = JSON.parse(line.slice(6));
                 if (p.id) sseRequestId = p.id;
+                if (p.model) responseModel = p.model;
                 if (p.usage) usage = p.usage;
               } catch {}
             }
@@ -309,7 +344,7 @@ async function main() {
 
         const totalTime = performance.now() - startTime;
 
-        // Calculate cost
+        // Calculate cost using official peak rates ($0.30 miss, $1.20 output)
         let costThisCall = 0;
         if (usage) {
           costThisCall =
@@ -329,9 +364,10 @@ async function main() {
               id: item.id,
               name: item.name,
               provider: 'deepseek',
-              model: 'deepseek-chat',
+              model: responseModel,
               requestId: finalRequestId,
               timestamp: new Date().toISOString(),
+              tcpConnectMs,
               ttftMs: Math.round(ttft),
               totalTimeMs: Math.round(totalTime),
               usage: usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
@@ -345,7 +381,7 @@ async function main() {
         );
 
         console.log(`  ✓ Saved: ${rawPath}`);
-        console.log(`  ⏱ TTFT: ${Math.round(ttft)}ms | Total: ${Math.round(totalTime)}ms | Spend: $${costThisCall.toFixed(6)}`);
+        console.log(`  ⏱ TCP Connect: ${tcpConnectMs}ms | TTFT: ${Math.round(ttft)}ms | Total: ${Math.round(totalTime)}ms | Spend: $${costThisCall.toFixed(6)}`);
       } catch (err: any) {
         console.error(`  ❌ Failed to record ${item.id}:`, err.message);
       }

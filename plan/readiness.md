@@ -8,7 +8,7 @@
 | **Cost Guard & Rate Limiter** | ✅ YES (Rate limit, input cap, max_tokens, $0.50 budget kill switch, invite gate) | ❌ NO (BLOCKED [needs key]) | ❌ NO | Distributed Redis synchronization across multi-instance clusters |
 | **Streaming Parser** | ✅ YES (42 unit tests + 10 mock fixture replays) | ❌ NO (BLOCKED [needs key]: raw streams replayed from /app/fixtures/mock/) | ❌ NO | Live streaming multi-byte UTF-8 split across packet boundaries |
 | **Fixture Provenance Guard** | ✅ YES (`scripts/verify-fixtures.js` rejects mock fixtures in real/) | N/A (real/ is clean and empty) | ❌ NO | Third-party provider sidecar metadata schema variations |
-| **Live Preview (Bundler + Iframe)** | ✅ YES (CSP, no allow-same-origin, in-memory storage shim, event.source check tested) | ❌ NO | ❌ NO | Real browser end-to-end rendering (Playwright not installed; marked [manual]), complex NPM module dependencies |
+| **Live Preview (Bundler + Iframe)** | ✅ YES (CSP, no allow-same-origin, in-memory storage shim, event.source check, and Playwright 1.64.1 E2E browser proof verified) | ❌ NO | ❌ NO | Complex NPM module dependencies |
 | **Sandboxed Execution (`/api/sandbox`)** | ✅ YES (Command filter & Node runner) | N/A | ❌ NO (gVisor `runsc` requires Linux kernel) | Real gVisor `systrap` container runtime on bare VPS, egress iptables allowlist |
 | **VPS Bootstrap (`infra/setup.sh`)** | ⚠️ Partial (`bash -n` syntax checked) | N/A | ❌ NO | Fresh Ubuntu 24.04 LTS package installs, systemd service registration |
 | **Edit Turns & Patch Parser** | ✅ YES (Search/replace patch engine, strict 1-match invariant, multi-turn Todo edit tested) | ❌ NO (BLOCKED [needs key]) | ❌ NO | Whitespace tolerance fuzzy matching, multi-file concurrent merge conflict |
@@ -19,7 +19,7 @@
 | **Breakeven v3 Model (T29)** | ✅ YES (scripts/breakeven_v3.js verified, HK$158 Pro price reconciled, 3x3 sensitivity matrix complete) | N/A | N/A | Actual conversion rate variance (modeled at 1%, 3%, 5%) |
 | **Failover Strategy (T30)** | ✅ YES (plan/failover_strategy.md written; test proves 0 duplicates & partial file discard) | ❌ NO (BLOCKED [needs key]) | ❌ NO | Upstream provider token refund policy on partial connection drop |
 | **Market & Regulatory Facts** | ✅ YES (7 verified with live 200 URLs, 3 unverified due to 403/404, 5 corrections documented) | N/A | N/A | Future regulatory changes to HK cross-border API access or Stripe payment rules |
-| **Pre-Push Security (T31/T34)** | ✅ YES (Deep scan passed 0 leaks across 114 files, .env gitignored, entire git history clean) | N/A | N/A | Untracked temporary files during developer manual editing |
+| **Pre-Push Security (T31/T34)** | ✅ YES (Deep scan passed 0 leaks across 128 files, negative control verified, .env gitignored, entire git history clean) | N/A | N/A | Untracked temporary files during developer manual editing |
 
 ---
-*Last updated: Iteration 1 of Resume Loop (Tasks T26-T33 Complete: Evidence Index, Cost Labels Retagged [mock]/[assumption], Secrets Scan Verified)*
+*Last updated: Iteration 1 of Resume Loop (Tasks T32-T35 Complete: Evidence Index, Cost Labels Retagged [mock]/[assumption], Secrets Scan Negative Control Verified, Playwright 1.64.1 Browser Proof Verified; T36-T37 BLOCKED [needs key], STATUS: STOPPED)*

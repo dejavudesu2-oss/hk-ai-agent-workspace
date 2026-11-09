@@ -69,8 +69,7 @@ async function runBrowserProof() {
     alreadyRunning = true;
     console.log('  ✓ Dev server is already active at http://localhost:3000');
   } catch (_) {
-    console.log('  Starting npm run dev in background...');
-    devServerProcess = spawn('npm', ['run', 'dev'], {
+    devServerProcess = spawn('npm run dev', {
       cwd: rootDir,
       shell: true,
       stdio: ['ignore', 'pipe', 'pipe'],

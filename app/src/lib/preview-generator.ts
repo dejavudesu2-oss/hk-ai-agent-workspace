@@ -153,7 +153,15 @@ export function generatePreviewHtml(files: VFSMap): string {
     normalizedFiles['public/index.html']?.content ||
     normalizedFiles['index.htm']?.content;
 
-  if (!hasAnyFiles) {
+  // Check if project has React/JSX/TSX files
+  const hasReactFiles = Object.keys(normalizedFiles).some((p) => {
+    if (/\.(jsx|tsx|ts)$/i.test(p)) return true;
+    const content = normalizedFiles[p]?.content || '';
+    return /from\s+['"]react['"]|React\./.test(content);
+  });
+
+  const hasIndexHtml = Boolean(indexHtml);
+  if (!hasAnyFiles || (!hasIndexHtml && !hasReactFiles)) {
     return `
       <!DOCTYPE html>
       <html>
@@ -188,18 +196,11 @@ export function generatePreviewHtml(files: VFSMap): string {
       </head>
       <body>
         <div class="spinner"></div>
-        <p>正在等待代碼流式寫入完成...</p>
+        <p>正在等待主頁面 (index.html) 編寫完成...</p>
       </body>
       </html>
     `;
   }
-
-  // Check if project has React/JSX/TSX files
-  const hasReactFiles = Object.keys(normalizedFiles).some((p) => {
-    if (/\.(jsx|tsx|ts)$/i.test(p)) return true;
-    const content = normalizedFiles[p]?.content || '';
-    return /from\s+['"]react['"]|React\./.test(content);
-  });
 
   let html = indexHtml || `<!DOCTYPE html>
 <html>

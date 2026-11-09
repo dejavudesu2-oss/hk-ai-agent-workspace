@@ -123,6 +123,14 @@ function runCostModel() {
   console.log(`   - Reason 2: Search/Replace Patch Actions. Instead of regenerating entire files (1,850 tokens),`);
   console.log(`     each edit emits targeted patches of only ~250 output tokens (3 * 250 = 750 tokens vs 1,850 initial).\n`);
 
+  console.log('5. Platform OpEx, Stripe HK Fees & Breakeven Baseline:');
+  const stripe = calculateStripeHKFee(PRO_TIER.priceHKD);
+  console.log(`   - Pro Plan Price:            HK$ ${PRO_TIER.priceHKD.toFixed(2)} ($${(PRO_TIER.priceHKD / USD_TO_HKD).toFixed(2)} USD)`);
+  console.log(`   - Stripe HK Fee (3.4%+2.35): HK$ ${stripe.feeHKD.toFixed(3)} (${stripe.effectiveRate.toFixed(2)}% take rate) [verified: stripe.com/hk/pricing]`);
+  console.log(`   - Net Collected / Pro User:  HK$ ${stripe.netHKD.toFixed(3)} ($${stripe.netUSD.toFixed(3)} USD)`);
+  console.log(`   - Fixed Platform OpEx:       $${TOTAL_FIXED_OPEX_USD.toFixed(2)} USD (HK$ ${TOTAL_FIXED_OPEX_HKD.toFixed(2)}: Supabase $25, VPS $24, Domain $1)`);
+  console.log(`   - Breakeven Baseline:        7 paying users (covering $50 OpEx + 226 free users @ 3% conv / 5 tasks/day)\n`);
+
   console.log('================================================================');
   console.log('✅ Cost Sanity Audit & Recalculation Complete.');
   console.log('================================================================');

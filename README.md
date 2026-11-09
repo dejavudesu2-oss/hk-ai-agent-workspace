@@ -101,7 +101,8 @@ Every layer of this workspace includes automated acceptance tests:
 
 | Command | Purpose | Expected Result |
 | :--- | :--- | :--- |
-| `npm test` | Complete automated unit & integration test suite (64 tests) | Exits 0, all 64 tests pass |
+| `npm test` | Complete automated unit & integration test suite (65 tests) | Exits 0, all 65 tests pass |
+| `npm run test:browser` | Playwright 1.64.1 E2E browser proof against dev server | Exits 0, verifies streaming, preview, storage shim & CSP |
 | `npm run test:chat` | Cross-platform Node fetch SSE stream test | Exits 0, verifies streaming chunks without curl.exe |
 | `npm run test:e2e` | End-to-End prompt-to-preview verification | Exits 0, validates English Todo App and HK Taxi Splitter |
 | `npm run test:vfs` | Virtual File System & FileTree dynamic population | Exits 0, verifies live tree building as stream arrives |
@@ -191,7 +192,9 @@ hk-ai-agent-workspace/
 │   ├── audit.md                  # T14 engineering & architectural contradictions audit
 │   ├── breakeven_v3.md           # T29 3x3 sensitivity matrix & HK$158 breakeven model
 │   ├── ci.md                     # CI/CD pipeline & gVisor runner execution plan
+│   ├── cost.md                   # T33 FinOps lifecycle scenarios & strict token provenance
 │   ├── cost_v2.md                # FinOps Cost Model v2 (3 scenarios, peak rates, sane tokens)
+│   ├── evidence_index.md         # T32 comprehensive verification index & traceability matrix
 │   ├── facts.md                  # 2026 authoritative fact check matrix (T24 audited)
 │   ├── failover_strategy.md      # T30 upstream failover & VFS integrity specification
 │   ├── preview_security.md       # Iframe sandbox security & CSP specification (T21)
@@ -201,10 +204,11 @@ hk-ai-agent-workspace/
 ├── scripts/
 │   ├── audit_facts_v2.js         # Facts audit verification test
 │   ├── breakeven_v3.js           # Breakeven v3 3x3 sensitivity engine
+│   ├── browser_proof.js          # T35 Playwright E2E browser proof & security audit
 │   ├── cost_v2.js                # FinOps token calculator v2
-│   ├── record_real_fixtures.ts   # Live stream fixture recorder with budget cap
+│   ├── record_real_fixtures.ts   # Live stream fixture recorder with budget cap & TCP metrics
 │   ├── replay_fixtures.ts        # Fixture replayer & TTFT/compliance auditor
-│   ├── secrets_scan.js           # Pre-push credential & secrets scan
+│   ├── secrets_scan.js           # Pre-push credential & secrets scan with negative control
 │   ├── t27_evidence.js           # T27 missing evidence printer
 │   ├── test_chat_stream.js       # Cross-platform Node fetch streaming acceptance test
 │   ├── test_vfs_stream.js        # VFS streaming tree acceptance test
