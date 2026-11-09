@@ -440,3 +440,20 @@
 - **Status**: PASS
 - **Next Task**: T24
 
+## [iter 11] T24
+- **Task**: T24 FACTS AUDIT: Re-open /plan/facts.md, unverified tags for unvisited URLs, audit top 3 favorable
+- **Commands**:
+  - `node scripts/audit_facts.js`: Exit 0 (Legacy check passed with 10 claims and 3 favorable re-checks)
+  - `node scripts/audit_facts_v2.js`: Exit 0 (Honest counts and corrections reported)
+- **Exit Code**: 0
+- **Summary Counts**:
+  - Verified Claims: 7 (Direct URL opened with HTTP 200 via `read_url_content`: DeepSeek, Bedrock, OpenAI, gVisor, Babel, Lightsail, Stripe HK)
+  - Unverified Claims: 3 (Direct bot fetch failed with HTTP 403/404; validated via grounded web search: CodeSandbox Terms, Cyberport CCMF, TVP status)
+  - Corrected Claims: 5 (Versus early naive drafts: TVP closure on Dec 31, 2024; gVisor systrap default; Bedrock HK IP block; OpenAI HK unsupported region; DeepSeek TTFT vs RTT and peak rates)
+- **Reviewer Findings & Fixes**:
+  1. Updated `/plan/facts.md` enforcing the strict mandate: any row without a URL directly opened with 200 OK is marked `[UNVERIFIED]`.
+  2. Hostile re-check performed on the 3 most favorable claims (DeepSeek context caching peak rates, gVisor non-KVM systrap runtime, and Sandpack client-side Apache 2.0 vs Nodebox proprietary license).
+  3. Created `scripts/audit_facts_v2.js` automating verification matrix scanning, counts reporting, and regression tracking.
+- **Status**: PASS
+- **Next Task**: T25
+

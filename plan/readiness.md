@@ -15,6 +15,7 @@
 | **Provider Failover** | ✅ YES (Simulated 429, 503, slow stream timeout, mid-stream disconnect, dual-failure tested) | ❌ NO | ❌ NO | Live TCP RST resets from Chinese/HK border transit, real ISP throttling |
 | **CI / CD Pipeline** | ✅ YES (Job 1: npm test + build verified) | N/A | ⚠️ Job 2 UNTESTED-locally (Marked in ci.yml; exact steps in plan/ci.md) | GitHub runner network limits, gVisor systrap apt mirror availability |
 | **FinOps Cost Model v2** | ✅ YES (scripts/cost_v2.js verified, 3 scenarios, Stripe HK, free abuse & breakeven modeled) | ⚠️ BLOCKED [needs key] (Grounded on T16 measured fixtures + DeepSeek peak pricing) | N/A | High-volume production token variance under unconstrained user prompts |
+| **Market & Regulatory Facts** | ✅ YES (7 verified with live 200 URLs, 3 unverified due to 403/404, 5 corrections documented) | N/A | N/A | Future regulatory changes to HK cross-border API access or Stripe payment rules |
 
 ---
-*Last updated: Iteration 10 (T23 Cost Model v2 Complete - scripts/cost_v2.js & /plan/cost_v2.md verified, 7-8 paying users breakeven)*
+*Last updated: Iteration 11 (T24 Facts Audit Complete - 7 verified, 3 unverified, 5 corrections versus early drafts, 3 favorable claims re-checked)*
