@@ -1,0 +1,123 @@
+<!DOCTYPE html><html lang="zh-HK" class="dark"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/hk-ai-agent-workspace/_next/static/css/d2ad22c6bb02e6af.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/hk-ai-agent-workspace/_next/static/chunks/webpack-7b8d71ab02311aa6.js"/><script src="/hk-ai-agent-workspace/_next/static/chunks/618f8807-572be1a36944386a.js" async=""></script><script src="/hk-ai-agent-workspace/_next/static/chunks/364-f1c5883dfb0bb5eb.js" async=""></script><script src="/hk-ai-agent-workspace/_next/static/chunks/main-app-3e5e2dc137ba9bdc.js" async=""></script><script src="/hk-ai-agent-workspace/_next/static/chunks/324-60da30edcbeeacdb.js" async=""></script><script src="/hk-ai-agent-workspace/_next/static/chunks/app/page-c2710600db163274.js" async=""></script><title>HK AI Agent Workspace - 在線 AI 代碼工作台</title><meta name="description" content="類 Bolt.new / Claude Artifacts / Replit Agent 的香港在線 AI 智能體代碼工作台"/><script src="/hk-ai-agent-workspace/_next/static/chunks/polyfills-42372ed130431b0a.js" noModule=""></script></head><body class="bg-[#0d1117] text-[#c9d1d9] antialiased overflow-hidden"><main class="flex h-screen w-screen overflow-hidden bg-[#0d1117] text-white"><div class="w-80 h-full bg-[#0d1117] border-r border-[#30363d] flex flex-col text-sm select-none"><div class="p-3 border-b border-[#30363d] bg-[#161b22]"><div class="flex items-center justify-between mb-1.5"><div class="flex items-center space-x-2"><div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div><span class="font-bold text-white text-xs tracking-wide">HK AI AGENT WORKSPACE</span></div><span class="text-[10px] bg-blue-900/60 text-blue-300 border border-blue-700/50 px-1.5 py-0.5 rounded font-mono">HK ~15ms</span></div><div class="grid grid-cols-2 gap-1.5 text-[10px] text-gray-400 font-mono mt-2"><div class="bg-[#0d1117] p-1.5 rounded border border-[#30363d]/80 flex items-center space-x-1"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cpu w-3 h-3 text-purple-400 shrink-0"><rect width="16" height="16" x="4" y="4" rx="2"></rect><rect width="6" height="6" x="9" y="9" rx="1"></rect><path d="M15 2v2"></path><path d="M15 20v2"></path><path d="M2 15h2"></path><path d="M2 9h2"></path><path d="M20 15h2"></path><path d="M20 9h2"></path><path d="M9 2v2"></path><path d="M9 20v2"></path></svg><span class="truncate">DeepSeek-Flash</span></div><div class="bg-[#0d1117] p-1.5 rounded border border-[#30363d]/80 flex items-center space-x-1"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-activity w-3 h-3 text-emerald-400 shrink-0"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg><span class="truncate">gVisor Sandbox</span></div></div></div><div class="flex-1 overflow-y-auto p-3 space-y-3"><div class="flex flex-col items-start"><div class="max-w-[90%] rounded-lg px-3 py-2 text-xs leading-relaxed bg-[#161b22] text-gray-200 border border-[#30363d]"><div class="whitespace-pre-wrap font-sans">歡迎使用香港在線 AI Agent 工作台！
+我支援即時流式代碼編寫、雙軌安全沙盒運行與 Monaco 編輯器熱重載。
+請在下方輸入需求（例如點擊「build me a todo app」），即可體驗全自動代碼流式生成與即時預覽。</div></div><span class="text-[9px] text-gray-500 mt-1 px-1">剛剛</span></div><div></div></div><div class="px-3 py-2 border-t border-[#30363d]/50 bg-[#161b22]/50"><div class="text-[10px] text-gray-400 mb-1.5">快速體驗指令：</div><div class="flex flex-wrap gap-1.5"><button class="text-[11px] bg-[#21262d] hover:bg-[#30363d] text-gray-200 px-2 py-1 rounded transition border border-[#30363d]">📋 build me a todo app</button><button class="text-[11px] bg-[#21262d] hover:bg-[#30363d] text-gray-200 px-2 py-1 rounded transition border border-[#30363d]">🚕 的士分賬器</button></div></div><div class="p-3 border-t border-[#30363d] bg-[#161b22]"><form class="flex flex-col space-y-2"><textarea placeholder="描述你想構建的應用（如：build me a todo app）..." rows="2" class="w-full bg-[#0d1117] border border-[#30363d] rounded-md p-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none font-sans"></textarea><div class="flex items-center justify-between"><div></div><button type="submit" disabled="" class="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:hover:bg-blue-600 text-white text-xs px-3 py-1.5 rounded font-medium transition"><span>生成代碼</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send w-3 h-3"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"></path><path d="m21.854 2.147-10.94 10.939"></path></svg></button></div></form></div></div><div class="w-56 h-full bg-[#161b22] border-r border-[#30363d] flex flex-col text-xs select-none"><div class="flex items-center justify-between px-3 py-2 border-b border-[#30363d] text-gray-400 font-semibold tracking-wide text-[11px] uppercase"><span>專案檔案目錄</span><span class="bg-[#21262d] text-gray-300 px-1.5 py-0.5 rounded text-[10px]">0</span></div><div class="flex-1 overflow-y-auto py-2"><div class="px-3 py-4 text-gray-500 text-center italic">暫無檔案</div></div></div><div class="flex-1 flex flex-col h-full min-w-0"><div class="flex-1 h-2/3 min-h-0"><div class="flex flex-col h-full bg-[#1e1e1e] border-r border-[#30363d] overflow-hidden"><div class="flex items-center bg-[#161b22] border-b border-[#30363d] overflow-x-auto no-scrollbar h-9"><div class="text-xs text-gray-500 px-3 py-1.5 italic">無開啟檔案</div></div><div class="flex-1 relative"><div class="flex flex-col items-center justify-center h-full text-gray-500 text-sm"><p>請從左側目錄樹選取檔案，或在對話框輸入提示詞自動生成代碼</p></div></div></div></div><div class="h-1/3 min-h-0"><div class="h-44 bg-[#0d1117] border-t border-[#30363d] flex flex-col font-mono text-xs select-none"><div class="flex items-center justify-between px-3 py-1.5 bg-[#161b22] border-b border-[#30363d]"><div class="flex items-center space-x-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-terminal w-3.5 h-3.5 text-gray-400"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" x2="20" y1="19" y2="19"></line></svg><span class="text-gray-300 font-semibold text-[11px]">沙盒終端與執行日誌 (SANDBOX LOGS)</span></div><div class="flex items-center space-x-3 text-[10px]"><div class="flex items-center space-x-1 text-emerald-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield w-3 h-3"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg><span>隔離運行時: <!-- -->gVisor-runsc</span></div><button class="text-gray-400 hover:text-gray-200 p-0.5 rounded" title="清空終端日誌"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2 w-3 h-3"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg></button></div></div><div class="flex-1 p-2.5 overflow-y-auto text-gray-300 space-y-1"><div class="whitespace-pre-wrap leading-relaxed"><span>[system] HK AI Agent runtime initialized.</span></div><div class="whitespace-pre-wrap leading-relaxed"><span>[system] Connection established to Hong Kong edge gateway.</span></div><div class="whitespace-pre-wrap leading-relaxed"><span class="text-emerald-400">[gVisor] User-space syscall sandbox ready for code isolation.</span></div></div></div></div></div><div class="w-[45%] h-full min-w-[380px]"><div class="flex flex-col h-full bg-[#0d1117] border-l border-[#30363d] overflow-hidden"><div class="flex items-center justify-between px-3 py-2 bg-[#161b22] border-b border-[#30363d] h-9"><div class="flex items-center space-x-2"><div class="flex space-x-1.5"><div class="w-2.5 h-2.5 rounded-full bg-red-500/80"></div><div class="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div><div class="w-2.5 h-2.5 rounded-full bg-green-500/80"></div></div><span class="text-[11px] text-gray-400 font-mono ml-2 bg-[#0d1117] px-2.5 py-0.5 rounded border border-[#30363d]">http://localhost:5173/</span></div><div class="flex items-center space-x-3 text-xs"><div class="flex items-center text-emerald-400 space-x-1 text-[11px]"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check w-3.5 h-3.5"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg><span>沙盒即時預覽正常</span></div><button class="text-gray-400 hover:text-white p-1 rounded hover:bg-[#21262d] transition" title="重新整理預覽"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-cw w-3.5 h-3.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg></button><button class="text-gray-400 hover:text-white p-1 rounded hover:bg-[#21262d] transition" title="在新標籤開啟"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link w-3.5 h-3.5"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></button></div></div><div class="flex-1 bg-white relative"><iframe srcDoc="
+      &lt;!DOCTYPE html&gt;
+      &lt;html&gt;
+      &lt;head&gt;
+        &lt;meta charset=&quot;UTF-8&quot; /&gt;
+        
+  &lt;script&gt;
+    (function() {
+      window.onerror = function(msg, url, line, col, error) {
+        window.parent.postMessage({
+          type: &#x27;WATCHDOG_ERROR&#x27;,
+          message: String(msg) + &#x27; (line &#x27; + line + &#x27;:&#x27; + col + &#x27;)&#x27;
+        }, &#x27;*&#x27;);
+      };
+      window.onunhandledrejection = function(event) {
+        window.parent.postMessage({
+          type: &#x27;WATCHDOG_ERROR&#x27;,
+          message: &#x27;Unhandled Promise: &#x27; + (event.reason ? (event.reason.message || event.reason) : &#x27;Unknown&#x27;)
+        }, &#x27;*&#x27;);
+      };
+    })();
+  &lt;/script&gt;
+
+        
+  &lt;script&gt;
+    (function() {
+      function createMemoryStorage() {
+        var store = new Map();
+        return {
+          getItem: function(key) {
+            var val = store.get(String(key));
+            return val !== undefined ? val : null;
+          },
+          setItem: function(key, val) {
+            store.set(String(key), String(val));
+          },
+          removeItem: function(key) {
+            store.delete(String(key));
+          },
+          clear: function() {
+            store.clear();
+          },
+          key: function(index) {
+            var keys = Array.from(store.keys());
+            return keys[index] !== undefined ? keys[index] : null;
+          },
+          get length() {
+            return store.size;
+          }
+        };
+      }
+
+      try {
+        var testKey = &#x27;__test_storage__&#x27;;
+        window.localStorage.setItem(testKey, &#x27;1&#x27;);
+        window.localStorage.removeItem(testKey);
+      } catch (e) {
+        var memLocalStorage = createMemoryStorage();
+        try {
+          Object.defineProperty(window, &#x27;localStorage&#x27;, {
+            configurable: true,
+            enumerable: true,
+            get: function() { return memLocalStorage; }
+          });
+        } catch (_) {
+          window.localStorage = memLocalStorage;
+        }
+      }
+
+      try {
+        var testKey = &#x27;__test_storage__&#x27;;
+        window.sessionStorage.setItem(testKey, &#x27;1&#x27;);
+        window.sessionStorage.removeItem(testKey);
+      } catch (e) {
+        var memSessionStorage = createMemoryStorage();
+        try {
+          Object.defineProperty(window, &#x27;sessionStorage&#x27;, {
+            configurable: true,
+            enumerable: true,
+            get: function() { return memSessionStorage; }
+          });
+        } catch (_) {
+          window.sessionStorage = memSessionStorage;
+        }
+      }
+    })();
+  &lt;/script&gt;
+
+        
+  &lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; data: blob: https://cdn.tailwindcss.com https://unpkg.com; img-src * data: blob:; connect-src *;&quot;&gt;
+
+        &lt;style&gt;
+          body {
+            background: #0d1117;
+            color: #8b949e;
+            font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+          }
+          .spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid #58a6ff;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+          }
+          @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        &lt;/style&gt;
+      &lt;/head&gt;
+      &lt;body&gt;
+        &lt;div class=&quot;spinner&quot;&gt;&lt;/div&gt;
+        &lt;p&gt;正在等待主頁面 (index.html) 編寫完成...&lt;/p&gt;
+      &lt;/body&gt;
+      &lt;/html&gt;
+    " title="Sandbox Preview" sandbox="allow-scripts allow-modals allow-forms" class="w-full h-full border-none"></iframe></div></div></div></main><script src="/hk-ai-agent-workspace/_next/static/chunks/webpack-7b8d71ab02311aa6.js" async=""></script><script>(self.__next_f=self.__next_f||[]).push([0]);self.__next_f.push([2,null])</script><script>self.__next_f.push([1,"1:HL[\"/hk-ai-agent-workspace/_next/static/css/d2ad22c6bb02e6af.css\",\"style\"]\n"])</script><script>self.__next_f.push([1,"2:I[4690,[],\"\"]\n4:I[7379,[],\"ClientPageRoot\"]\n5:I[1903,[\"324\",\"static/chunks/324-60da30edcbeeacdb.js\",\"931\",\"static/chunks/app/page-c2710600db163274.js\"],\"default\",1]\n6:I[1742,[],\"\"]\n7:I[9121,[],\"\"]\n9:I[8201,[],\"\"]\na:[]\n"])</script><script>self.__next_f.push([1,"0:[\"$\",\"$L2\",null,{\"buildId\":\"iwDKDr5elR3Z3OPiKXnQQ\",\"assetPrefix\":\"/hk-ai-agent-workspace\",\"urlParts\":[\"\",\"\"],\"initialTree\":[\"\",{\"children\":[\"__PAGE__\",{}]},\"$undefined\",\"$undefined\",true],\"initialSeedData\":[\"\",{\"children\":[\"__PAGE__\",{},[[\"$L3\",[\"$\",\"$L4\",null,{\"props\":{\"params\":{},\"searchParams\":{}},\"Component\":\"$5\"}],null],null],null]},[[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/hk-ai-agent-workspace/_next/static/css/d2ad22c6bb02e6af.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\"}]],[\"$\",\"html\",null,{\"lang\":\"zh-HK\",\"className\":\"dark\",\"children\":[\"$\",\"body\",null,{\"className\":\"bg-[#0d1117] text-[#c9d1d9] antialiased overflow-hidden\",\"children\":[\"$\",\"$L6\",null,{\"parallelRouterKey\":\"children\",\"segmentPath\":[\"children\"],\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L7\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":{\"fontFamily\":\"system-ui,\\\"Segoe UI\\\",Roboto,Helvetica,Arial,sans-serif,\\\"Apple Color Emoji\\\",\\\"Segoe UI Emoji\\\"\",\"height\":\"100vh\",\"textAlign\":\"center\",\"display\":\"flex\",\"flexDirection\":\"column\",\"alignItems\":\"center\",\"justifyContent\":\"center\"},\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":{\"display\":\"inline-block\",\"margin\":\"0 20px 0 0\",\"padding\":\"0 23px 0 0\",\"fontSize\":24,\"fontWeight\":500,\"verticalAlign\":\"top\",\"lineHeight\":\"49px\"},\"children\":\"404\"}],[\"$\",\"div\",null,{\"style\":{\"display\":\"inline-block\"},\"children\":[\"$\",\"h2\",null,{\"style\":{\"fontSize\":14,\"fontWeight\":400,\"lineHeight\":\"49px\",\"margin\":0},\"children\":\"This page could not be found.\"}]}]]}]}]],\"notFoundStyles\":[]}]}]}]],null],null],\"couldBeIntercepted\":false,\"initialHead\":[null,\"$L8\"],\"globalErrorComponent\":\"$9\",\"missingSlots\":\"$Wa\"}]\n"])</script><script>self.__next_f.push([1,"8:[[\"$\",\"meta\",\"0\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}],[\"$\",\"meta\",\"1\",{\"charSet\":\"utf-8\"}],[\"$\",\"title\",\"2\",{\"children\":\"HK AI Agent Workspace - 在線 AI 代碼工作台\"}],[\"$\",\"meta\",\"3\",{\"name\":\"description\",\"content\":\"類 Bolt.new / Claude Artifacts / Replit Agent 的香港在線 AI 智能體代碼工作台\"}]]\n3:null\n"])</script></body></html>
