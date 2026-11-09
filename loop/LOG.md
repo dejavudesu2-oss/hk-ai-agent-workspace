@@ -514,5 +514,19 @@
   2. Deep secrets scan audited full git commit history and all `/app/fixtures` (real and mock) with 0 credentials or Authorization headers detected. Confirmed `.env` is gitignored and untracked.
   3. Documented exact GitHub CLI and Git push commands for private repository publishing.
 - **Status**: PASS
-- **Next Task**: NONE (All T26-T31 Complete)
+- **Next Task**: T32
+
+## [iter 1] T32
+- **Task**: T32 EVIDENCE INDEX: Write /plan/evidence_index.md with 1 row per task T14-T30 (status, file, test command, last real output line), totals, T29 sensitivity table, T30 failover answer, T28 plausibility check
+- **Commands**:
+  - Verification test suite against all 17 tasks T14-T30: All exit 0
+  - Authored `/plan/evidence_index.md`
+- **Exit Code**: 0
+- **Findings & Fixes**:
+  1. Built complete traceability index covering all 17 tasks (T14 to T30) with explicit status, file, test command, and exact last real output line.
+  2. Documented totals: 14 loop iterations across cycles, 0 failures, 1 blocked (T16 live API).
+  3. Included full hostile-review findings per task from T14 to T30.
+  4. Embedded the T29 sensitivity matrix (1/3/5% conversion x 1/5/15 free tasks/day), T30 failover architecture answers (restart vs resume, token accounting, VFS file integrity), and the T28 plausibility check ($0.000559 implied only 465.8 tokens; corrected to $0.002315). Zero NOT DONE rows.
+- **Status**: PASS
+- **Next Task**: T33
 
