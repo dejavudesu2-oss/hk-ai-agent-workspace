@@ -31,6 +31,72 @@ export const PREVIEW_CSP = `
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdn.tailwindcss.com https://unpkg.com; img-src * data: blob:; connect-src *;">
 `;
 
+export const IN_MEMORY_STORAGE_SHIM = `
+  <script>
+    (function() {
+      function createMemoryStorage() {
+        var store = new Map();
+        return {
+          getItem: function(key) {
+            var val = store.get(String(key));
+            return val !== undefined ? val : null;
+          },
+          setItem: function(key, val) {
+            store.set(String(key), String(val));
+          },
+          removeItem: function(key) {
+            store.delete(String(key));
+          },
+          clear: function() {
+            store.clear();
+          },
+          key: function(index) {
+            var keys = Array.from(store.keys());
+            return keys[index] !== undefined ? keys[index] : null;
+          },
+          get length() {
+            return store.size;
+          }
+        };
+      }
+
+      try {
+        var testKey = '__test_storage__';
+        window.localStorage.setItem(testKey, '1');
+        window.localStorage.removeItem(testKey);
+      } catch (e) {
+        var memLocalStorage = createMemoryStorage();
+        try {
+          Object.defineProperty(window, 'localStorage', {
+            configurable: true,
+            enumerable: true,
+            get: function() { return memLocalStorage; }
+          });
+        } catch (_) {
+          window.localStorage = memLocalStorage;
+        }
+      }
+
+      try {
+        var testKey = '__test_storage__';
+        window.sessionStorage.setItem(testKey, '1');
+        window.sessionStorage.removeItem(testKey);
+      } catch (e) {
+        var memSessionStorage = createMemoryStorage();
+        try {
+          Object.defineProperty(window, 'sessionStorage', {
+            configurable: true,
+            enumerable: true,
+            get: function() { return memSessionStorage; }
+          });
+        } catch (_) {
+          window.sessionStorage = memSessionStorage;
+        }
+      }
+    })();
+  </script>
+`;
+
 export const BROWSER_MODULE_SHIM = `
   <script>
     (function() {
@@ -94,6 +160,7 @@ export function generatePreviewHtml(files: VFSMap): string {
       <head>
         <meta charset="UTF-8" />
         ${WATCHDOG_SCRIPT}
+        ${IN_MEMORY_STORAGE_SHIM}
         ${PREVIEW_CSP}
         <style>
           body {
@@ -147,12 +214,20 @@ export function generatePreviewHtml(files: VFSMap): string {
 </body>
 </html>`;
 
-  // 1. Inject Watchdog script at the VERY TOP of <head> so it captures all runtime & syntax errors
+  // 1. Inject Watchdog script and In-Memory Storage Shim at the VERY TOP of <head>
   if (!html.includes('WATCHDOG_ERROR')) {
     if (html.includes('<head>')) {
       html = safeReplace(html, '<head>', `<head>\n  ${WATCHDOG_SCRIPT}`);
     } else {
       html = `${WATCHDOG_SCRIPT}${html}`;
+    }
+  }
+
+  if (!html.includes('__test_storage__')) {
+    if (html.includes('<head>')) {
+      html = safeReplace(html, '<head>', `<head>\n  ${IN_MEMORY_STORAGE_SHIM}`);
+    } else {
+      html = `${IN_MEMORY_STORAGE_SHIM}${html}`;
     }
   }
 

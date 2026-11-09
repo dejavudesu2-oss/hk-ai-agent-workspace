@@ -18,6 +18,14 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ files, onFixError }) =
   // Listen for watchdog errors from the iframe
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      // Security Check: Verify that event.source matches our preview iframe's contentWindow
+      // Strictly prevents spoofed postMessages from external windows or other frames
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        if (event.source !== iframeRef.current.contentWindow) {
+          return;
+        }
+      }
+
       if (event.data && event.data.type === 'WATCHDOG_ERROR') {
         const errMsg = event.data.message || 'Unknown runtime error';
         setRuntimeError(errMsg);

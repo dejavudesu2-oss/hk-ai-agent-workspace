@@ -391,3 +391,17 @@
 - **Status**: PASS
 - **Next Task**: T21
 
+## [iter 8] T21
+- **Task**: T21 PREVIEW SECURITY: Exact CSP/sandbox audit, Babel unsafe-eval handling, storage shim, origin check
+- **Commands**:
+  - `npm test`: 58/58 tests passed (4 new dedicated preview security tests)
+- **Exit Code**: 0
+- **Reviewer Findings & Fixes**:
+  1. Printed and verified exact sandbox configuration: `sandbox="allow-scripts allow-modals allow-forms"` in `LivePreview.tsx`. Verified that `allow-same-origin` is strictly omitted, forcing the iframe into an opaque `null` origin.
+  2. Documented Babel Standalone requirement for `'unsafe-eval'`: Babel Standalone requires dynamic code execution (`new Function(...)`) to transpile JSX/TSX client-side. Counterbalanced by the opaque `null` origin which completely isolates parent cookies, DOM, and local storage.
+  3. Implemented `IN_MEMORY_STORAGE_SHIM` in `preview-generator.ts`: detects `DOMException: Access is denied for this document` when sandboxed code accesses `localStorage` or `sessionStorage` and activates an in-memory key-value polyfill conforming to the `Storage` interface.
+  4. Verified parent listener checks `event.source !== iframeRef.current.contentWindow`. Because sandboxed frames have origin `"null"`, origin checks alone would permit any null-origin frame to forge watchdog errors.
+  5. Created `/plan/preview_security.md` documenting technical architecture, CSP directives, and manual E2E test protocol for parent cookie/storage/route isolation.
+- **Status**: PASS
+- **Next Task**: T22
+
