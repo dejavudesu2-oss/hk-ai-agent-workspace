@@ -11,9 +11,9 @@
 | **Sandboxed Execution (`/api/sandbox`)** | ✅ YES (Command filter & Node runner) | N/A | ❌ NO (gVisor `runsc` requires Linux kernel) | Real gVisor `systrap` container runtime, egress iptables allowlist |
 | **VPS Bootstrap (`infra/setup.sh`)** | ⚠️ Partial (`bash -n` syntax) | N/A | ❌ NO | Fresh Ubuntu 24.04 LTS package installs, systemd service registration |
 | **Edit Turns & Patch Parser** | ✅ YES (Search/replace patch engine, strict 1-match invariant, multi-turn Todo edit tested) | ❌ NO | ❌ NO | Whitespace tolerance fuzzy matching, multi-file merge conflict |
-| **Persistence (IndexedDB / Zip)** | ❌ UNTESTED (Pending T19) | N/A | ❌ NO | IndexedDB schema migrations, browser storage eviction, large zip memory |
+| **Persistence (IndexedDB / Zip)** | ✅ YES (IndexedDB autosave/restore + JSZip package download verified) | N/A | ❌ NO | Browser quota eviction under low disk, multi-tab IndexedDB locking |
 | **Provider Failover** | ❌ UNTESTED (Pending T20) | ❌ NO | ❌ NO | Mid-stream token splicing during failover, upstream timeout handling |
 | **CI / CD Pipeline** | ❌ UNTESTED (Pending T22) | N/A | ❌ NO | GitHub Actions runner execution |
 
 ---
-*Last updated: Iteration 5 (T18 Edit Turns Complete - Multi-turn file context, search/replace patch engine, single-match rejection verified)*
+*Last updated: Iteration 6 (T19 Persistence Complete - IndexedDB autosave/restore, Download ZIP verified)*

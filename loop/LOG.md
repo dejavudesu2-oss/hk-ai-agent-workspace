@@ -365,3 +365,15 @@
   3. Verified multi-turn scenario: Turn 1 creates Todo app (`package.json`, `styles.css`, `app.js`, `index.html`); Turn 2 applies patch modifying Add Button color to `#2563eb` and adding `btnDeleteAll`. Verified `package.json` was untouched and preview renders with CSP and watchdog.
 - **Status**: PASS
 - **Next Task**: T19
+
+## [iter 6] T19
+- **Task**: T19 PERSISTENCE: Autosave VFS & chat to IndexedDB, restore on reload, download zip button
+- **Commands**:
+  - `npm test`: 49/49 tests passed (2 new dedicated persistence tests)
+- **Exit Code**: 0
+- **Reviewer Findings & Fixes**:
+  1. Implemented `app/src/lib/persistence.ts` with `saveWorkspaceToIndexedDB`, `loadWorkspaceFromIndexedDB`, and `clearWorkspaceIndexedDB` with transparent in-memory testing polyfill.
+  2. Connected `useEffect` hooks in `page.tsx` for initial workspace restore and debounced autosave.
+  3. Verified JSZip package creation and automated buffer reload: file paths normalized and contents preserved.
+- **Status**: PASS
+- **Next Task**: T20

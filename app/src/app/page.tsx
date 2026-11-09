@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import JSZip from 'jszip';
 import { ChatPanel, ChatMessage } from '@/components/ChatPanel';
 import { FileTree } from '@/components/FileTree';
@@ -9,6 +9,7 @@ import { LivePreview } from '@/components/LivePreview';
 import { Terminal } from '@/components/Terminal';
 import { VFSMap, normalizePath } from '@/lib/vfs';
 import { StreamingActionParser } from '@/lib/streaming-parser';
+import { saveWorkspaceToIndexedDB, loadWorkspaceFromIndexedDB } from '@/lib/persistence';
 
 export default function WorkspacePage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -33,6 +34,34 @@ export default function WorkspacePage() {
   const addLog = useCallback((line: string) => {
     setLogs((prev) => [...prev, line]);
   }, []);
+
+  // Restore workspace from IndexedDB on page load
+  useEffect(() => {
+    loadWorkspaceFromIndexedDB()
+      .then((snapshot) => {
+        if (snapshot && snapshot.files && Object.keys(snapshot.files).length > 0) {
+          setFiles(snapshot.files);
+          if (snapshot.messages && snapshot.messages.length > 0) {
+            setMessages(snapshot.messages);
+          }
+          if (snapshot.activeFile) {
+            setActiveFile(snapshot.activeFile);
+            setOpenFiles([snapshot.activeFile]);
+          }
+          addLog('[system] Restored workspace from local IndexedDB storage.');
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not restore from IndexedDB:', err);
+      });
+  }, [addLog]);
+
+  // Autosave workspace whenever files, messages, or active file change
+  useEffect(() => {
+    if (Object.keys(files).length > 0) {
+      saveWorkspaceToIndexedDB({ files, messages, activeFile }).catch(() => {});
+    }
+  }, [files, messages, activeFile]);
 
   const handleSelectFile = useCallback((path: string) => {
     setActiveFile(path);
