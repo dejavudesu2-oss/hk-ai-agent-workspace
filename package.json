@@ -18,6 +18,10 @@
     "verify:fixtures": "node scripts/verify-fixtures.js",
     "cost:v2": "node scripts/cost_v2.js",
     "cost:v3": "node scripts/breakeven_v3.js",
-    "secrets:scan": "node scripts/secrets_scan.js"
+    "secrets:scan": "node scripts/secrets_scan.js",
+    "test:browser": "node scripts/browser_proof.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0"
   }
 }
