@@ -15,3 +15,15 @@
 | **T11** | End-to-end: prompt "build me a todo app" via the mock provider streams files into the editor and preview renders | `npm run test:e2e` exits 0 with 2/2 passing scenarios | DONE | 1 |
 | **T12** | /plan/7day_plan.md (day-by-day, hours, tests) and /plan/risks.md (top 10 risks + mitigations) | Aligned with actual built codebase; reviewed and verified | DONE | 1 |
 | **T13** | README with exact run commands | Fresh clone run commands verified (`npm run dev` started in 1661ms) | DONE | 1 |
+| **T14** | AUDIT: Reconcile 5 architecture contradictions, check npm audit, write /plan/audit.md | `npm run build` lists API routes; audit.md complete; npm audit clean | DONE | 1 |
+| **T15** | COST GUARD: IP rate limit, max input size, max_tokens, daily budget kill switch, invite code on /api/chat | `npm test` asserts 429/503 on limits, real provider blocked when budget exhausted | TODO | 0 |
+| **T16** | REAL MODEL FIXTURES: 10 varied prompts recorded/replayed, measure TTFT and format-compliance rate | `node scripts/replay_fixtures.js` (or ts) logs usage, compliance rate, and failure audit | TODO | 0 |
+| **T17** | FIX FROM REAL FAILURES: Fix parser and system prompt for edge cases, add regression tests | `npm test` passes all parser regression tests | TODO | 0 |
+| **T18** | EDIT TURNS: Multi-turn prompt sends file tree + contents, supports search/replace patch action | Multi-turn test asserts only targeted file changed, preview renders | TODO | 0 |
+| **T19** | PERSISTENCE: Autosave VFS & chat to IndexedDB, restore on reload, download zip button | Automated unit test & verified export/import | TODO | 0 |
+| **T20** | FAILOVER TEST: Fake upstream with 429, 503, disconnect, slow stream; failover asserted | Unit test verifies failover, no partial file duplication, clear error reporting | TODO | 0 |
+| **T21** | PREVIEW SECURITY: Exact CSP/sandbox audit, Babel unsafe-eval handling, storage shim, origin check | Unit tests verify storage shim, message source validation, cookie protection | TODO | 0 |
+| **T22** | CROSS-PLATFORM + CI: Replace curl.exe with Node fetch, backslash/traversal tests, GitHub Actions CI | `npm test` runs fetch test; CI workflow created with 2 jobs | TODO | 0 |
+| **T23** | COST MODEL v2: Real/assumed usage across 3 scenarios, free abuse, Stripe HK, Supabase, breakeven | `node scripts/cost_v2.js` and `/plan/cost_v2.md` show arithmetic in USD and HKD | TODO | 0 |
+| **T24** | FACTS AUDIT: Re-open /plan/facts.md, unverified tags for unvisited URLs, audit top 3 favorable | Counts printed: verified, unverified, corrected; audit log complete | TODO | 0 |
+| **T25** | DOCS + SAFETY: Update README, 7day_plan, risks.md; secrets scan; git instructions; readiness.md | Secrets scan passes cleanly; all documents synced with reality | TODO | 0 |

@@ -296,3 +296,19 @@
 - **Status**: PASS
 - **Next Task**: None (Queue Finished, STATUS: DONE)
 
+
+## [iter 1] T14
+- **Task**: T14 AUDIT: Reconcile 5 architecture contradictions, check npm audit, write /plan/audit.md
+- **Commands**:
+  - `npm run build`: Exit 0 (Output verified `/api/chat` and `/api/sandbox` dynamic routes, disproving static export)
+  - `npm audit fix`: Updated Next.js from 14.2.15 to 14.2.35 LTS and updated tsx/dev dependencies
+  - `npm test`: 32/32 tests passed (exit 0)
+- **Exit Code**: 0
+- **Reviewer Findings & Fixes**:
+  1. Contradiction A reconciled: App has dynamic API routes (`/api/chat`, `/api/sandbox`), impossible under Next.js `output: 'export'`. Deployment mode settled as Node.js server (`next start`) on VPS.
+  2. Contradiction B reconciled: $0.0275 blueprint vs $0.0036 current. Clearly separated measured vs assumed tokens in `/plan/audit.md`.
+  3. Contradiction C reconciled: "4 users to break even" ignored free-user token burn and Stripe fees. Marked biased/unrealistic; slated for Cost Model v2 in T23.
+  4. Contradiction D reconciled: "12-18ms" is network ping RTT, not TTFT. Relabeled in `.env.example` and docs; TTFT measured in T16.
+  5. Security & dependency: `npm audit fix` applied safely; Next.js 14.2.35 verified clean and passing.
+- **Status**: PASS
+- **Next Task**: T15
