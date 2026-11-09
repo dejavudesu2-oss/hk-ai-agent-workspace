@@ -34,7 +34,7 @@ tableLines.forEach((row, idx) => {
 
   const isVerified = statusCol.toUpperCase().includes('VERIFIED') && !statusCol.toUpperCase().includes('UNVERIFIED');
   const isUnverified = statusCol.toUpperCase().includes('UNVERIFIED');
-  const isCorrected = findingsCol.includes('Corrected') || findingsCol.includes('CORRECTED') || findingsCol.includes('Restriction') || findingsCol.includes('Violation');
+  const isCorrected = /correct|restriction|violation|terminated/i.test(findingsCol);
 
   if (isVerified) verifiedCount++;
   if (isUnverified) unverifiedCount++;

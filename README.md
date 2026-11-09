@@ -97,12 +97,15 @@ Every layer of this workspace includes automated acceptance tests:
 
 | Command | Purpose | Expected Result |
 | :--- | :--- | :--- |
-| `npm test` | Complete automated unit & integration test suite (61 tests) | Exits 0, all 61 tests pass |
+| `npm test` | Complete automated unit & integration test suite (64 tests) | Exits 0, all 64 tests pass |
 | `npm run test:chat` | Cross-platform Node fetch SSE stream test | Exits 0, verifies streaming chunks without curl.exe |
 | `npm run test:e2e` | End-to-End prompt-to-preview verification | Exits 0, validates English Todo App and HK Taxi Splitter |
 | `npm run test:vfs` | Virtual File System & FileTree dynamic population | Exits 0, verifies live tree building as stream arrives |
-| `node scripts/cost_v2.js` | FinOps Cost Model v2 token calculator & unit economics | Exits 0, verifies 3 scenarios, Stripe HK, and breakeven |
+| `node scripts/cost_v2.js` | FinOps Cost Model v2 token calculator & unit economics | Exits 0, verifies 3 scenarios, official peak rates, and sane tokens |
+| `node scripts/breakeven_v3.js` | Breakeven v3 3x3 sensitivity matrix engine (HK$158 Pro) | Exits 0, computes exact breakeven paying users per cell |
+| `node scripts/verify-fixtures.js` | Fixture provenance verifier | Exits 0 when real/ is valid or clean; exits 1 on mock in real/ |
 | `node scripts/audit_facts_v2.js` | Fact-check matrix verification (T24 audit) | Exits 0, reports 7 verified, 3 unverified, 5 corrected |
+| `node scripts/t27_evidence.js` | T27 comprehensive evidence printer | Exits 0, prints all hostile findings, audits, and test outputs |
 | `node scripts/secrets_scan.js` | Pre-push credential & secrets scan | Exits 0, confirms .env gitignored and 0 secrets leaked |
 | `node bench/container_density.js` | gVisor capacity planning on $24 VPS | Exits 0, outputs tagged formulas with `[assumption]` |
 | `npm run bench:load` | In-process load testing & TTFT latency | Exits 0, measures throughput (15+ req/s, 50,000 blocks/s) |
@@ -182,20 +185,26 @@ hk-ai-agent-workspace/
 ├── plan/
 │   ├── 7day_plan.md              # 7-day launch roadmap & daily pass/fail tests
 │   ├── audit.md                  # T14 engineering & architectural contradictions audit
+│   ├── breakeven_v3.md           # T29 3x3 sensitivity matrix & HK$158 breakeven model
 │   ├── ci.md                     # CI/CD pipeline & gVisor runner execution plan
-│   ├── cost_v2.md                # FinOps Cost Model v2 (3 scenarios, Stripe HK, breakeven)
+│   ├── cost_v2.md                # FinOps Cost Model v2 (3 scenarios, peak rates, sane tokens)
 │   ├── facts.md                  # 2026 authoritative fact check matrix (T24 audited)
+│   ├── failover_strategy.md      # T30 upstream failover & VFS integrity specification
 │   ├── preview_security.md       # Iframe sandbox security & CSP specification (T21)
+│   ├── provenance.md             # T26 metrics provenance & audit matrix
 │   ├── readiness.md              # Honest verification state tracking matrix
 │   └── risks.md                  # Top 10 engineering & commercial risks with mitigations
 ├── scripts/
 │   ├── audit_facts_v2.js         # Facts audit verification test
+│   ├── breakeven_v3.js           # Breakeven v3 3x3 sensitivity engine
 │   ├── cost_v2.js                # FinOps token calculator v2
 │   ├── record_real_fixtures.ts   # Live stream fixture recorder with budget cap
 │   ├── replay_fixtures.ts        # Fixture replayer & TTFT/compliance auditor
 │   ├── secrets_scan.js           # Pre-push credential & secrets scan
+│   ├── t27_evidence.js           # T27 missing evidence printer
 │   ├── test_chat_stream.js       # Cross-platform Node fetch streaming acceptance test
-│   └── test_vfs_stream.js        # VFS streaming tree acceptance test
+│   ├── test_vfs_stream.js        # VFS streaming tree acceptance test
+│   └── verify-fixtures.js        # Fixture provenance validator (rejects mock in real/)
 ├── .env.example                  # Environment configuration template
 ├── .gitignore                    # Git ignore file (safely excludes .env)
 ├── package.json                  # Root npm workspace configuration

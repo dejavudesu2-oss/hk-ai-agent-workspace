@@ -1,8 +1,15 @@
-# 【真實 FinOps 精算模型】香港在線 AI Agent 平台成本架構
-**貨幣基準**：USD 與 HKD（固定匯率採用 1 USD = 7.80 HKD [verified: HKMA Linked Exchange Rate System]）  
-**精算週期**：衝刺首月 (M1) 及 規模化運營 (1,000 MAU / 200 Pro 付費用戶)  
+# ⚠️ 【審計與作廢聲明 / RETRACTION & SUPERSEDED NOTICE】 (Task T26)
+> **重要聲明**：本文件（`cost.md`）為 T03 初期概念階段之未審計估算模型。其中採用的單次會話成本 $0.003636、HK$68 訂閱定價、以及「僅需 4 位 Pro 用戶收支平衡」的推論，**已於 T26/T28/T29 審計中全面撤回並重標為 `[retracted / assumption]`**。
+> 原因：初期模型未考量免費用戶群體的 Token 消耗對毛利的侵蝕，且未依架構藍圖對齊 HK$158 國際標準 Pro 定價。
+> **最新且經審計驗證的 FinOps 精算模型請參閱：**
+> - `/plan/cost_v2.md`（以 DeepSeek 官方尖峰費率重算之 3 大生命週期場景成本）
+> - `/plan/breakeven_v3.md`（對齊 HK$158 藍圖之 3x3 敏感度損益平衡矩陣）
 
 ---
+
+# 【歷史存檔 / ARCHIVED MODEL】香港在線 AI Agent 平台成本架構 (T03)
+**貨幣基準**：USD 與 HKD（固定匯率採用 1 USD = 7.80 HKD [verified: HKMA Linked Exchange Rate System]）  
+**精算週期**：衝刺首月 (M1) 及 規模化運營 (1,000 MAU / 200 Pro 付費用戶) [assumption]  
 
 ## 1. 核心定價與模型 Token 成本基數 (Token Cost Assumptions)
 
@@ -65,25 +72,26 @@
 
 ---
 
-## 5. 商業定價、毛利與收支平衡點 (Breakeven Analysis)
+## 5. 商業定價、毛利與收支平衡點 (Breakeven Analysis - RETRACTED)
+> **注意**：本節計算已被 T29 之 `/plan/breakeven_v3.md` 全面取代。
 
-* **Pro 訂閱定價**：**HK\$ 68 / 月 (~ \$8.72 USD)**
+* **Pro 訂閱定價**：**HK\$ 68 / 月 (~ \$8.72 USD)** [retracted: reconciled to HK$158 in T29]
 * **單筆 Stripe 付款淨所得**：
-  * 用戶支付：HK\$ 68.00
+  * 用戶支付：HK\$ 68.00 [retracted]
   * Stripe HK 手續費：$68 \times 3.4\% + 2.35 = \text{HK\$} 4.66$ [verified: Stripe HK pricing]
-  * 單用戶模型硬成本：HK\$ 1.70
-  * **單個 Pro 用戶每月淨邊際利潤 (Contribution Margin) = HK\$ 61.64 (~ \$7.90 USD)**
-  * **產品毛利率高達 90.6%！**
+  * 單用戶模型硬成本：HK\$ 1.70 [assumption]
+  * **單個 Pro 用戶每月淨邊際利潤 (Contribution Margin) = HK\$ 61.64 (~ \$7.90 USD)** [retracted]
+  * **產品毛利率高達 90.6%！** [retracted]
 
 ### 轉數快 (FPS) / PayMe 本地專案優惠：
 * 早鳥季票：**HK\$ 180 / 3 個月** (無任何支付手續費，0% 手續費損耗) [verified: HKMA FPS rules]。
-* 扣除 3 個月模型硬成本 (HK\$ 5.10)，淨利潤為 **HK\$ 174.90** (每個月淨賺 HK\$ 58.30)。
+* 扣除 3 個月模型硬成本 (HK\$ 5.10)，淨利潤為 **HK\$ 174.90** (每個月淨賺 HK\$ 58.30) [assumption]。
 
-### 極速收支平衡點 (Breakeven Point):
-* 平台每月固定開銷 = **HK\$ 195.00**
+### 極速收支平衡點 (Breakeven Point - RETRACTED):
+* 平台每月固定開銷 = **HK\$ 195.00** [assumption: 僅單機 VPS]
 * **實現全面收支平衡所需的付費用戶數**：
-  $$\text{Breakeven Users} = \frac{\text{HK\$} 195.00}{\text{HK\$} 61.64} = \mathbf{3.16\text{ 人}}$$
-* **結論：僅需 4 位付費 Pro 用戶，平台即可在首月實現全面收支平衡 (100% Breakeven)！**
+  $$\text{Breakeven Users} = \frac{\text{HK\$} 195.00}{\text{HK\$} 61.64} = \mathbf{3.16\text{ 人}}$$ [retracted: 忽視免費用戶 Token 負擔]
+* **結論：僅需 4 位付費 Pro 用戶，平台即可在首月實現全面收支平衡 (100% Breakeven)！** [RETRACTED: 參閱 breakeven_v3.md]
 
 ---
 

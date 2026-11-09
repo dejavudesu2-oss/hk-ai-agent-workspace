@@ -78,13 +78,13 @@ Pricing is based on DeepSeek's official published rates (`api-docs.deepseek.com/
 | **Total Fixed OpEx** | | **$50.00** | **HK$ 390.00** |
 
 ### Stripe HK Processing Fee Verification
-- **Pricing Rule for Hong Kong Merchant Accounts**: **3.4% + HK$ 2.35** per successful transaction.
-- **Pro Tier Subscription Price**: **HK$ 68.00 / month** ($8.718 USD / month).
+- **Pricing Rule for Hong Kong Merchant Accounts**: **3.4% + HK$ 2.35** per successful transaction [verified: stripe.com/hk/pricing].
+- **Pro Tier Subscription Price**: Reconciled to **HK$ 158.00 / month** ($20.256 USD / month) per architectural blueprint.
 - **Arithmetic**:
-  $$\text{Variable Fee} = HK\$ 68.00 \times 3.4\% = HK\$ 2.312$$
+  $$\text{Variable Fee} = HK\$ 158.00 \times 3.4\% = HK\$ 5.372$$
   $$\text{Fixed Fee} = HK\$ 2.35$$
-  $$\text{Total Stripe Fee} = HK\$ 2.312 + HK\$ 2.35 = \mathbf{HK\$ 4.662\text{ (6.86\% effective)}}$$
-  $$\mathbf{Net\ Stripe\ Revenue} = HK\$ 68.00 - HK\$ 4.662 = \mathbf{HK\$ 63.338\text{ (\$8.120 USD)}}$$
+  $$\text{Total Stripe Fee} = HK\$ 5.372 + HK\$ 2.35 = \mathbf{HK\$ 7.722\text{ (4.89\% effective take rate)}}$$
+  $$\mathbf{Net\ Stripe\ Revenue} = HK\$ 158.00 - HK\$ 7.722 = \mathbf{HK\$ 150.278\text{ (\$19.266 USD)}}$$
 
 ---
 
@@ -92,57 +92,65 @@ Pricing is based on DeepSeek's official published rates (`api-docs.deepseek.com/
 
 ### Free-Tier Abuse Capacity
 - Daily rate limit: **15 tasks/day** per user/IP.
-- If a free user maximizes the quota every single day of the month:
+- If a free user maximizes the quota every single day of the month (Scenario 1 @ $0.0023154):
   $$\text{Max Free Tasks/Month} = 15 \times 30 = 450\text{ tasks}$$
-  $$\text{Max Monthly LLM Cost per Abuser} = 450 \times \$0.0005586 = \mathbf{\$0.2514\text{ USD (HK\$ 1.96)}}$$
+  $$\text{Max Monthly LLM Cost per Abuser} = 450 \times \$0.0023154 = \mathbf{\$1.0419\text{ USD (HK\$ 8.127)}}$$
 
 ### Freemium Ratio
-At a stated **3.0% free-to-paid conversion rate**:
+At a baseline **3.0% free-to-paid conversion rate**:
 $$\text{Free Users per Pro User} = \frac{1 - 0.03}{0.03} = 32.33\text{ free users}$$
 
 ### Pro User Token Consumption
-An active Pro user generating 60 multi-turn projects/month (Scenario 2):
-$$\text{Pro Monthly Token Burn} = 60 \times \$0.0009576 = \mathbf{\$0.0575\text{ USD (HK\$ 0.448)}}$$
+An active Pro user generating 60 multi-turn projects/month (Scenario 2 @ $0.0036240):
+$$\text{Pro Monthly Token Burn} = 60 \times \$0.0036240 = \mathbf{\$0.2174\text{ USD (HK\$ 1.696)}}$$
+
+### Pro Base Margin Before Free Tier ($NCM_0$):
+$$NCM_0 = \$19.2664\text{ (Net Stripe)} - \$0.2174\text{ (Pro Tokens)} = \mathbf{\$19.0490\text{ USD (HK\$ 148.58)}}$$
 
 ---
 
 ## 6. Breakeven Calculations (Arithmetic Shown)
 
-### Cohort A: Typical Free Tier (Average 15 tasks/month)
-- Free user monthly cost: $15 \times \$0.0005586 = \$0.00838\text{ USD}$
-- Free tier burden per Pro user: $32.33 \times \$0.00838 = \$0.2709\text{ USD (HK\$ 2.113)}$
-- Net margin per Pro user ($NCM$):
-  $$NCM = \$8.120\text{ (Revenue)} - \$0.0575\text{ (Pro Tokens)} - \$0.2709\text{ (Free Drain)} = \mathbf{\$7.7916\text{ USD (HK\$ 60.777)}}$$
+### Cohort A: Base Target (3% Conversion, Average 5 Free Tasks/Day = 150 tasks/mo)
+- Free user monthly cost: $150 \times \$0.0023154 = \$0.34731\text{ USD (HK\$ 2.709)}$
+- Free tier burden per Pro user: $32.33 \times \$0.34731 = \$11.230\text{ USD (HK\$ 87.59)}$
+- Net contribution margin per Pro user ($NCM$):
+  $$NCM = \$19.0490 - \$11.230 = \mathbf{\$7.819\text{ USD (HK\$ 60.99)}}$$
 - **Breakeven Formula**:
-  $$N_{\text{breakeven}} = \lceil \frac{\$50.00}{\$7.7916} \rceil = \lceil 6.417 \rceil = \mathbf{7\text{ paying users}}$$
-  - In HKD: $\lceil HK\$ 390.00 / HK\$ 60.777 \rceil = \mathbf{7\text{ paying users}}$.
+  $$N_{\text{breakeven}} = \lceil \frac{\$50.00}{\$7.819} \rceil = \lceil 6.394 \rceil = \mathbf{7\text{ paying users}}$$
+  - In HKD: $\lceil HK\$ 390.00 / HK\$ 60.99 \rceil = \mathbf{7\text{ paying users}}$.
   - Supporting Community: 7 Pro users + 226 free users (233 total active users).
 
 ---
 
-### Cohort B: 10% Heavy Abusers (15 tasks/day) + 90% Typical
-- Blended free user cost: $0.10 \times \$0.2514 + 0.90 \times \$0.00838 = \$0.03268\text{ USD}$
-- Free tier burden per Pro user: $32.33 \times \$0.03268 = \$1.0566\text{ USD (HK\$ 8.241)}$
-- Net margin per Pro user:
-  $$NCM = \$8.120 - \$0.0575 - \$1.0566 = \mathbf{\$7.0059\text{ USD (HK\$ 54.646)}}$$
+### Cohort B: Conservative Low Conversion (1% Conversion, 1 Free Task/Day = 30 tasks/mo)
+- Free user monthly cost: $30 \times \$0.0023154 = \$0.06946\text{ USD (HK\$ 0.542)}$
+- Free users per Pro user: $(1 - 0.01) / 0.01 = 99.0$
+- Free tier burden per Pro user: $99.0 \times \$0.06946 = \$6.877\text{ USD (HK\$ 53.64)}$
+- Net contribution margin per Pro user:
+  $$NCM = \$19.0490 - \$6.877 = \mathbf{\$12.172\text{ USD (HK\$ 94.94)}}$$
 - **Breakeven Formula**:
-  $$N_{\text{breakeven}} = \lceil \frac{\$50.00}{\$7.0059} \rceil = \lceil 7.137 \rceil = \mathbf{8\text{ paying users}}$$
-  - In HKD: $\lceil HK\$ 390.00 / HK\$ 54.646 \rceil = \mathbf{8\text{ paying users}}$.
-  - Supporting Community: 8 Pro users + 259 free users (267 total active users).
+  $$N_{\text{breakeven}} = \lceil \frac{\$50.00}{\$12.172} \rceil = \lceil 4.108 \rceil = \mathbf{5\text{ paying users}}$$
+  - In HKD: $\lceil HK\$ 390.00 / HK\$ 94.94 \rceil = \mathbf{5\text{ paying users}}$.
+  - Supporting Community: 5 Pro users + 495 free users (500 total active users).
 
 ---
 
-## 7. Sensitivity Analysis Matrix
+## 7. Full 3x3 Sensitivity Matrix Reference
 
-| Conversion Rate | Free User Usage Profile | Net Margin / Pro User (HKD) | Breakeven Pro Users | Total Active Users |
-| :--- | :--- | :--- | :--- | :--- |
-| **5.0%** (High) | Typical (15 tasks/mo) | HK$ 61.65 | **7** | 140 |
-| **3.0%** (Base) | Typical (15 tasks/mo) | HK$ 60.78 | **7** | 233 |
-| **3.0%** (Base) | 10% Heavy Abusers | HK$ 54.65 | **8** | 267 |
-| **2.0%** (Low) | Typical (15 tasks/mo) | HK$ 59.70 | **7** | 350 |
-| **2.0%** (Low) | 10% Heavy Abusers | HK$ 50.84 | **8** | 400 |
-| **1.0%** (Stress) | 10% Heavy Abusers | HK$ 39.42 | **10** | 1,000 |
-| **3.0%** (Stress) | 100% Abusers (15/day) | -HK$ 0.50 (Deficit) | **Infeasible** (Negative margin) | N/A |
+The complete 3x3 sensitivity matrix ($1\% / 3\% / 5\%$ conversion $\times$ $1 / 5 / 15$ free tasks/day) with exhaustive per-cell arithmetic is documented in **`/plan/breakeven_v3.md`** and verified by **`node scripts/breakeven_v3.js`**.
+
+| Conversion | Free Tasks / Day | Free Drain / Pro | Net Margin / Pro (HKD) | Breakeven Pro Users | Status |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| **5.0%** | 1 task/day (30/mo) | HK$ 10.29 | HK$ 138.29 | **3 users** | ✅ Highly Profitable |
+| **5.0%** | 5 tasks/day (150/mo) | HK$ 51.47 | HK$ 97.11 | **5 users** | ✅ Healthy Buffer |
+| **5.0%** | 15 tasks/day (450/mo) | HK$ 154.41 | -HK$ 5.83 | **Infeasible** | 🛑 Margin Deficit |
+| **3.0%** | 1 task/day (30/mo) | HK$ 17.52 | HK$ 131.06 | **3 users** | ✅ Highly Profitable |
+| **3.0%** | 5 tasks/day (150/mo) | HK$ 87.59 | HK$ 60.99 | **7 users** | ✅ Base Launch Target |
+| **3.0%** | 15 tasks/day (450/mo) | HK$ 262.77 | -HK$ 114.19 | **Infeasible** | 🛑 Margin Deficit |
+| **1.0%** | 1 task/day (30/mo) | HK$ 53.64 | HK$ 94.94 | **5 users** | ✅ Resilient |
+| **1.0%** | 5 tasks/day (150/mo) | HK$ 268.19 | -HK$ 119.61 | **Infeasible** | 🛑 Margin Deficit |
+| **1.0%** | 15 tasks/day (450/mo) | HK$ 804.58 | -HK$ 656.00 | **Infeasible** | 🛑 Margin Deficit |
 
 > **Critical FinOps Conclusion**:
 > If unmonetized users are allowed to script or bot the 15 tasks/day allowance continuously, unit economics invert. The IP rate limiter, captcha, and invite code gate implemented in T15 are not optional performance optimizations—they are an existential financial safeguard against margin destruction.
