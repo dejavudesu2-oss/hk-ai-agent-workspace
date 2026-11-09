@@ -1,3 +1,4 @@
+import { GoogleGenAI } from '@google/genai';
 import { getMatchingTemplate } from './templates';
 import {
   isBudgetExhausted,
@@ -132,22 +133,30 @@ export interface UpstreamConfig {
   baseUrl: string;
   apiKey: string;
   model: string;
+  isGeminiSdk?: boolean;
   fetchFn?: (url: string, init?: any) => Promise<Response>;
   timeoutMs?: number;
 }
 
 /**
  * Real LLM Provider Adapter
- * Connects to live upstream APIs with dual-failover (Primary: DeepSeek HK edge, Secondary: SiliconFlow Qwen).
+ * Connects to live upstream APIs with multi-provider failover (Gemini 3.8 Flash / DeepSeek HK edge / SiliconFlow Qwen).
  */
 export class RealLLMProvider implements LLMProvider {
-  name = 'Real Multi-Provider LLM (DeepSeek / SiliconFlow)';
+  name = 'Real Multi-Provider LLM (Gemini 3.8 Flash / DeepSeek / SiliconFlow)';
+  private geminiKey?: string;
   private deepseekKey?: string;
   private siliconflowKey?: string;
   private customUpstreams?: UpstreamConfig[];
   private fallbackMock = new MockLLMProvider();
 
-  constructor(deepseekKey?: string, siliconflowKey?: string, customUpstreams?: UpstreamConfig[]) {
+  constructor(
+    deepseekKey?: string,
+    siliconflowKey?: string,
+    customUpstreams?: UpstreamConfig[],
+    geminiKey?: string
+  ) {
+    this.geminiKey = geminiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     this.deepseekKey = deepseekKey || process.env.DEEPSEEK_API_KEY;
     this.siliconflowKey = siliconflowKey || process.env.SILICONFLOW_API_KEY;
     this.customUpstreams = customUpstreams;
@@ -163,6 +172,16 @@ export class RealLLMProvider implements LLMProvider {
       : [];
 
     if (!this.customUpstreams) {
+      if (this.geminiKey) {
+        upstreams.push({
+          name: 'Google Gemini (gemini-3.8-flash)',
+          baseUrl: 'https://generativelanguage.googleapis.com',
+          apiKey: this.geminiKey,
+          model: 'gemini-3.8-flash',
+          isGeminiSdk: true,
+        });
+      }
+
       if (this.deepseekKey) {
         upstreams.push({
           name: 'DeepSeek (Primary HK Edge)',
@@ -200,6 +219,55 @@ export class RealLLMProvider implements LLMProvider {
     }
 
     const fetchUpstream = async (upstream: UpstreamConfig): Promise<Response> => {
+      if (upstream.isGeminiSdk && !upstream.fetchFn) {
+        const ai = new GoogleGenAI({ apiKey: upstream.apiKey });
+        const geminiStream = await ai.interactions.create({
+          model: upstream.model,
+          input: promptContent,
+          system_instruction: SYSTEM_PROMPT,
+          store: false,
+          stream: true,
+          generation_config: {
+            max_output_tokens: maxTokens,
+          },
+        });
+        const enc = new TextEncoder();
+        const sseBody = new ReadableStream({
+          async start(ctrl) {
+            try {
+              for await (const event of geminiStream) {
+                if (event.event_type === 'step.delta' && event.delta?.type === 'text' && event.delta.text) {
+                  const chunkPayload = JSON.stringify({
+                    id: 'gemini-stream',
+                    model: upstream.model,
+                    choices: [{ delta: { content: event.delta.text } }],
+                  });
+                  ctrl.enqueue(enc.encode(`data: ${chunkPayload}\n\n`));
+                } else if (event.event_type === 'interaction.completed') {
+                  const u = event.interaction?.usage;
+                  const usagePayload = JSON.stringify({
+                    id: event.interaction?.id || 'gemini-done',
+                    model: upstream.model,
+                    usage: {
+                      prompt_tokens: u?.total_input_tokens || 0,
+                      completion_tokens: u?.total_output_tokens || 0,
+                      total_tokens: u?.total_tokens || 0,
+                    },
+                    choices: [],
+                  });
+                  ctrl.enqueue(enc.encode(`data: ${usagePayload}\n\n`));
+                }
+              }
+              ctrl.enqueue(enc.encode('data: [DONE]\n\n'));
+              ctrl.close();
+            } catch (err) {
+              ctrl.error(err);
+            }
+          },
+        });
+        return new Response(sseBody, { status: 200 });
+      }
+
       const fetchFn = upstream.fetchFn || fetch;
       const abortCtrl = new AbortController();
       const timeoutMs = upstream.timeoutMs || 15000;
@@ -398,7 +466,13 @@ export function getLLMProvider(): LLMProvider {
   }
 
   // If LLM_PROVIDER is not explicitly 'mock', but keys are provided, choose real
-  if (providerType !== 'mock' && (process.env.DEEPSEEK_API_KEY || process.env.SILICONFLOW_API_KEY)) {
+  if (
+    providerType !== 'mock' &&
+    (process.env.GEMINI_API_KEY ||
+      process.env.GOOGLE_API_KEY ||
+      process.env.DEEPSEEK_API_KEY ||
+      process.env.SILICONFLOW_API_KEY)
+  ) {
     return new RealLLMProvider();
   }
 

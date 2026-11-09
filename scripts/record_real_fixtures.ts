@@ -241,11 +241,28 @@ async function main() {
       fs.mkdirSync(FIXTURES_REAL_DIR, { recursive: true });
     }
 
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.SILICONFLOW_API_KEY;
+    // Load .env from workspace root or app/.env if present
+    for (const envCandidate of [
+      path.resolve(__dirname, '../.env'),
+      path.resolve(__dirname, '../app/.env'),
+    ]) {
+      if (fs.existsSync(envCandidate)) {
+        const lines = fs.readFileSync(envCandidate, 'utf-8').split(/\r?\n/);
+        for (const line of lines) {
+          const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+          if (m && !process.env[m[1]]) {
+            process.env[m[1]] = m[2].replace(/^['"]|['"]$/g, '');
+          }
+        }
+      }
+    }
+
+    const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    const apiKey = geminiKey || process.env.DEEPSEEK_API_KEY || process.env.SILICONFLOW_API_KEY;
     const isReal = !!apiKey && apiKey.trim().length > 0;
 
     if (!isReal) {
-      console.warn('⚠️  [BLOCKED: needs key] No DEEPSEEK_API_KEY or SILICONFLOW_API_KEY found in .env or environment.');
+      console.warn('⚠️  [BLOCKED: needs key] No GEMINI_API_KEY, DEEPSEEK_API_KEY, or SILICONFLOW_API_KEY found in .env or environment.');
       console.warn('   Per task instruction: Marking real-API parts BLOCKED [needs key].');
       console.warn('   Generating canonical mock LLM stream fixtures into /app/fixtures/mock/ for parser audit...\n');
 
@@ -255,7 +272,8 @@ async function main() {
 
     // Live execution against real provider with strict $0.50 budget cap
     let totalSpentUSD = 0;
-    console.log(`✓ Active API Key found. Connecting to live provider...`);
+    const isGemini = !!geminiKey && geminiKey.trim().length > 0;
+    console.log(`✓ Active API Key found (${isGemini ? 'Google Gemini 3.8 Flash' : 'DeepSeek'}). Connecting to live provider...`);
 
     for (const item of FIXTURE_PROMPTS) {
       if (totalSpentUSD >= MAX_BUDGET_USD) {
@@ -265,8 +283,9 @@ async function main() {
 
       console.log(`\nRecording prompt [${item.id}] ${item.name}...`);
       
-      // Measure separate TCP connect time to DeepSeek API
-      const tcpConnectMs = await measureTcpConnectTime('api.deepseek.com', 443);
+      // Measure separate TCP connect time to upstream API
+      const tcpHost = isGemini ? 'generativelanguage.googleapis.com' : 'api.deepseek.com';
+      const tcpConnectMs = await measureTcpConnectTime(tcpHost, 443);
 
       let promptContent = item.prompt;
       // For edit turns 26-30, supply the initial Todo app code context so model can produce valid search/replace patches
@@ -283,68 +302,108 @@ async function main() {
       let rawStream = '';
       let usage: any = null;
       let sseRequestId = '';
-      let responseModel = 'deepseek-chat';
+      let responseModel = isGemini ? 'gemini-3.8-flash' : 'deepseek-chat';
 
       try {
-        const response = await fetch('https://api.deepseek.com/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: 'deepseek-chat',
+        if (isGemini) {
+          const { GoogleGenAI } = await import('@google/genai');
+          const ai = new GoogleGenAI({ apiKey: geminiKey });
+          const geminiStream = await ai.interactions.create({
+            model: 'gemini-3.8-flash',
+            input: promptContent,
+            system_instruction: SYSTEM_PROMPT,
+            store: false,
             stream: true,
-            stream_options: { include_usage: true },
-            max_tokens: 4096,
-            messages: [
-              {
-                role: 'system',
-                content: SYSTEM_PROMPT,
-              },
-              { role: 'user', content: promptContent },
-            ],
-          }),
-        });
+            generation_config: {
+              max_output_tokens: 4096,
+            },
+          });
+          let firstTokenReceived = false;
+          for await (const event of geminiStream) {
+            if (event.event_type === 'step.delta' && event.delta?.type === 'text' && event.delta.text) {
+              if (!firstTokenReceived) {
+                ttft = performance.now() - startTime;
+                firstTokenReceived = true;
+              }
+              const chunkJson = JSON.stringify({
+                id: sseRequestId || 'gemini-chunk',
+                model: 'gemini-3.8-flash',
+                choices: [{ delta: { content: event.delta.text } }],
+              });
+              rawStream += `data: ${chunkJson}\n\n`;
+            } else if (event.event_type === 'interaction.completed') {
+              sseRequestId = event.interaction?.id || `gemini_${Date.now()}`;
+              const u = event.interaction?.usage;
+              usage = {
+                prompt_tokens: u?.total_input_tokens || 0,
+                completion_tokens: u?.total_output_tokens || 0,
+                total_tokens: u?.total_tokens || 0,
+              };
+            }
+          }
+          rawStream += 'data: [DONE]\n\n';
+        } else {
+          const response = await fetch('https://api.deepseek.com/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              model: 'deepseek-chat',
+              stream: true,
+              stream_options: { include_usage: true },
+              max_tokens: 4096,
+              messages: [
+                {
+                  role: 'system',
+                  content: SYSTEM_PROMPT,
+                },
+                { role: 'user', content: promptContent },
+              ],
+            }),
+          });
 
-        if (!response.ok || !response.body) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const headerRequestId = response.headers.get('x-request-id');
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let firstTokenReceived = false;
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunkText = decoder.decode(value, { stream: true });
-          if (!firstTokenReceived && chunkText.includes('content')) {
-            ttft = performance.now() - startTime;
-            firstTokenReceived = true;
+          if (!response.ok || !response.body) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
 
-          rawStream += chunkText;
+          const headerRequestId = response.headers.get('x-request-id');
+          if (headerRequestId) sseRequestId = headerRequestId;
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let firstTokenReceived = false;
 
-          // Parse usage, id, and model from response chunks
-          const lines = chunkText.split('\n');
-          for (const line of lines) {
-            if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-              try {
-                const p = JSON.parse(line.slice(6));
-                if (p.id) sseRequestId = p.id;
-                if (p.model) responseModel = p.model;
-                if (p.usage) usage = p.usage;
-              } catch {}
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunkText = decoder.decode(value, { stream: true });
+            if (!firstTokenReceived && chunkText.includes('content')) {
+              ttft = performance.now() - startTime;
+              firstTokenReceived = true;
+            }
+
+            rawStream += chunkText;
+
+            // Parse usage, id, and model from response chunks
+            const lines = chunkText.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                try {
+                  const p = JSON.parse(line.slice(6));
+                  if (p.id) sseRequestId = p.id;
+                  if (p.model) responseModel = p.model;
+                  if (p.usage) usage = p.usage;
+                } catch {}
+              }
             }
           }
         }
 
         const totalTime = performance.now() - startTime;
 
-        // Calculate cost using official peak rates ($0.30 miss, $1.20 output)
+        // Calculate cost using conservative $0.30/1M input and $1.20/1M output cap
         let costThisCall = 0;
         if (usage) {
           costThisCall =
@@ -352,7 +411,7 @@ async function main() {
           totalSpentUSD += costThisCall;
         }
 
-        const finalRequestId = headerRequestId || sseRequestId || `req_${Date.now()}`;
+        const finalRequestId = sseRequestId || `req_${Date.now()}`;
         const rawPath = path.join(FIXTURES_REAL_DIR, `${item.id}.raw.txt`);
         const metaPath = path.join(FIXTURES_REAL_DIR, `${item.id}.meta.json`);
 
@@ -363,7 +422,7 @@ async function main() {
             {
               id: item.id,
               name: item.name,
-              provider: 'deepseek',
+              provider: isGemini ? 'gemini' : 'deepseek',
               model: responseModel,
               requestId: finalRequestId,
               timestamp: new Date().toISOString(),
