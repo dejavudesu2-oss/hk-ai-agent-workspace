@@ -8,6 +8,7 @@ import {
 export interface ChatOptions {
   maxTokens?: number;
   files?: Record<string, { path: string; content: string }>;
+  noMockFallback?: boolean;
 }
 
 export interface LLMProvider {
@@ -112,11 +113,13 @@ export class MockLLMProvider implements LLMProvider {
   }
 }
 
-interface UpstreamConfig {
+export interface UpstreamConfig {
   name: string;
   baseUrl: string;
   apiKey: string;
   model: string;
+  fetchFn?: (url: string, init?: any) => Promise<Response>;
+  timeoutMs?: number;
 }
 
 /**
@@ -127,11 +130,13 @@ export class RealLLMProvider implements LLMProvider {
   name = 'Real Multi-Provider LLM (DeepSeek / SiliconFlow)';
   private deepseekKey?: string;
   private siliconflowKey?: string;
+  private customUpstreams?: UpstreamConfig[];
   private fallbackMock = new MockLLMProvider();
 
-  constructor(deepseekKey?: string, siliconflowKey?: string) {
+  constructor(deepseekKey?: string, siliconflowKey?: string, customUpstreams?: UpstreamConfig[]) {
     this.deepseekKey = deepseekKey || process.env.DEEPSEEK_API_KEY;
     this.siliconflowKey = siliconflowKey || process.env.SILICONFLOW_API_KEY;
+    this.customUpstreams = customUpstreams;
   }
 
   async streamChat(message: string, options?: ChatOptions): Promise<Response> {
@@ -139,24 +144,28 @@ export class RealLLMProvider implements LLMProvider {
       throw new Error('Daily API budget limit ($0.50 USD) exhausted or kill switch active. Upstream call blocked.');
     }
 
-    const upstreams: UpstreamConfig[] = [];
+    const upstreams: UpstreamConfig[] = this.customUpstreams
+      ? [...this.customUpstreams]
+      : [];
 
-    if (this.deepseekKey) {
-      upstreams.push({
-        name: 'DeepSeek (Primary HK Edge)',
-        baseUrl: 'https://api.deepseek.com',
-        apiKey: this.deepseekKey,
-        model: 'deepseek-chat',
-      });
-    }
+    if (!this.customUpstreams) {
+      if (this.deepseekKey) {
+        upstreams.push({
+          name: 'DeepSeek (Primary HK Edge)',
+          baseUrl: 'https://api.deepseek.com',
+          apiKey: this.deepseekKey,
+          model: 'deepseek-chat',
+        });
+      }
 
-    if (this.siliconflowKey) {
-      upstreams.push({
-        name: 'SiliconFlow (Backup Failover)',
-        baseUrl: 'https://api.siliconflow.cn/v1',
-        apiKey: this.siliconflowKey,
-        model: 'Qwen/Qwen2.5-Coder-32B-Instruct',
-      });
+      if (this.siliconflowKey) {
+        upstreams.push({
+          name: 'SiliconFlow (Backup Failover)',
+          baseUrl: 'https://api.siliconflow.cn/v1',
+          apiKey: this.siliconflowKey,
+          model: 'Qwen/Qwen2.5-Coder-32B-Instruct',
+        });
+      }
     }
 
     if (upstreams.length === 0) {
@@ -181,23 +190,44 @@ export class RealLLMProvider implements LLMProvider {
       }
 
       try {
-        const response = await fetch(`${upstream.baseUrl}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${upstream.apiKey}`,
-          },
-          body: JSON.stringify({
-            model: upstream.model,
-            stream: true,
-            stream_options: { include_usage: true },
-            max_tokens: maxTokens,
-            messages: [
-              { role: 'system', content: SYSTEM_PROMPT },
-              { role: 'user', content: promptContent },
-            ],
-          }),
+        const fetchFn = upstream.fetchFn || fetch;
+        const abortCtrl = new AbortController();
+        const timeoutMs = upstream.timeoutMs || 15000;
+
+        let timerId: any;
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timerId = setTimeout(() => {
+            abortCtrl.abort();
+            reject(new Error(`Upstream ${upstream.name} timed out after ${timeoutMs}ms`));
+          }, timeoutMs);
         });
+
+        let response: Response;
+        try {
+          response = await Promise.race([
+            fetchFn(`${upstream.baseUrl}/chat/completions`, {
+              method: 'POST',
+              signal: abortCtrl.signal,
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${upstream.apiKey}`,
+              },
+              body: JSON.stringify({
+                model: upstream.model,
+                stream: true,
+                stream_options: { include_usage: true },
+                max_tokens: maxTokens,
+                messages: [
+                  { role: 'system', content: SYSTEM_PROMPT },
+                  { role: 'user', content: promptContent },
+                ],
+              }),
+            }),
+            timeoutPromise,
+          ]);
+        } finally {
+          clearTimeout(timerId);
+        }
 
         if (!response.ok || !response.body) {
           throw new Error(`${upstream.name} responded with HTTP ${response.status}: ${response.statusText}`);
@@ -273,8 +303,23 @@ export class RealLLMProvider implements LLMProvider {
       }
     }
 
-    console.warn('All real LLM upstreams failed. Gracefully falling back to MockLLMProvider:', lastError?.message);
-    const mockRes = await this.fallbackMock.streamChat(message);
+    const errorMsg = `All upstream LLM providers failed: ${lastError?.message || 'Upstream unavailable'}`;
+    console.warn(errorMsg);
+
+    if (options?.noMockFallback) {
+      return new Response(
+        JSON.stringify({
+          error: errorMsg,
+          code: 'ALL_PROVIDERS_FAILED',
+        }),
+        {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    const mockRes = await this.fallbackMock.streamChat(message, options);
     const headers = new Headers(mockRes.headers);
     headers.set('X-LLM-Provider-Fallback', 'true');
     headers.set('X-LLM-Fallback-Reason', lastError?.message || 'Upstream unavailable');

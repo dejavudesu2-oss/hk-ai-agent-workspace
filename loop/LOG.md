@@ -377,3 +377,17 @@
   3. Verified JSZip package creation and automated buffer reload: file paths normalized and contents preserved.
 - **Status**: PASS
 - **Next Task**: T20
+## [iter 7] T20
+- **Task**: T20 FAILOVER TEST: Fake upstream with 429, 503, disconnect, slow stream; failover asserted
+- **Commands**:
+  - `npm test`: 54/54 tests passed (5 new dedicated failover tests in `app/src/__tests__/failover.test.ts`)
+- **Exit Code**: 0
+- **Reviewer Findings & Fixes**:
+  1. Implemented upstream failover supporting arbitrary `fetchFn` injection and timeout races via `Promise.race([fetchCall, timeoutPromise])` in `RealLLMProvider`.
+  2. Verified seamless failover from primary 429 and 503 to secondary upstream with preserved SSE chunks.
+  3. Verified slow stream timeout (80ms threshold) aborts stalled primary upstream and succeeds via secondary.
+  4. Verified mid-stream failover recovery: when parser receives a partial stream that drops, re-feeding the recovered stream cleanly overwrites without partial file duplication or corrupted trailing artifacts.
+  5. Verified dual-upstream failure returns clean HTTP 503 error payload with `ALL_PROVIDERS_FAILED` when mock fallback is disabled.
+- **Status**: PASS
+- **Next Task**: T21
+

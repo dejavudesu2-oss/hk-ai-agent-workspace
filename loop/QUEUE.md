@@ -21,7 +21,7 @@
 | **T17** | FIX FROM REAL FAILURES: Fix parser and system prompt for edge cases, add regression tests | `npm test` passes all parser regression tests | DONE | 1 |
 | **T18** | EDIT TURNS: Multi-turn prompt sends file tree + contents, supports search/replace patch action | Multi-turn test asserts only targeted file changed, preview renders | DONE | 1 |
 | **T19** | PERSISTENCE: Autosave VFS & chat to IndexedDB, restore on reload, download zip button | Automated unit test & verified export/import | DONE | 1 |
-| **T20** | FAILOVER TEST: Fake upstream with 429, 503, disconnect, slow stream; failover asserted | Unit test verifies failover, no partial file duplication, clear error reporting | TODO | 0 |
+| **T20** | FAILOVER TEST: Fake upstream with 429, 503, disconnect, slow stream; failover asserted | Unit test verifies failover, no partial file duplication, clear error reporting | DONE | 1 |
 | **T21** | PREVIEW SECURITY: Exact CSP/sandbox audit, Babel unsafe-eval handling, storage shim, origin check | Unit tests verify storage shim, message source validation, cookie protection | TODO | 0 |
 | **T22** | CROSS-PLATFORM + CI: Replace curl.exe with Node fetch, backslash/traversal tests, GitHub Actions CI | `npm test` runs fetch test; CI workflow created with 2 jobs | TODO | 0 |
 | **T23** | COST MODEL v2: Real/assumed usage across 3 scenarios, free abuse, Stripe HK, Supabase, breakeven | `node scripts/cost_v2.js` and `/plan/cost_v2.md` show arithmetic in USD and HKD | TODO | 0 |
