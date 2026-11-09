@@ -14,6 +14,7 @@
 | **Persistence (IndexedDB / Zip)** | ✅ YES (IndexedDB autosave/restore + JSZip package download verified) | N/A | ❌ NO | Browser quota eviction under low disk, multi-tab IndexedDB locking |
 | **Provider Failover** | ✅ YES (Simulated 429, 503, slow stream timeout, mid-stream disconnect, dual-failure tested) | ❌ NO | ❌ NO | Live TCP RST resets from Chinese/HK border transit, real ISP throttling |
 | **CI / CD Pipeline** | ✅ YES (Job 1: npm test + build verified) | N/A | ⚠️ Job 2 UNTESTED-locally (Marked in ci.yml; exact steps in plan/ci.md) | GitHub runner network limits, gVisor systrap apt mirror availability |
+| **FinOps Cost Model v2** | ✅ YES (scripts/cost_v2.js verified, 3 scenarios, Stripe HK, free abuse & breakeven modeled) | ⚠️ BLOCKED [needs key] (Grounded on T16 measured fixtures + DeepSeek peak pricing) | N/A | High-volume production token variance under unconstrained user prompts |
 
 ---
-*Last updated: Iteration 9 (T22 Cross-Platform + CI Complete - curl.exe replaced with Node fetch, path normalization tested, .github/workflows/ci.yml created)*
+*Last updated: Iteration 10 (T23 Cost Model v2 Complete - scripts/cost_v2.js & /plan/cost_v2.md verified, 7-8 paying users breakeven)*

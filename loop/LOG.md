@@ -420,3 +420,23 @@
 - **Status**: PASS
 - **Next Task**: T23
 
+## [iter 10] T23
+- **Task**: T23 COST MODEL v2: Real/assumed usage across 3 scenarios, free abuse, Stripe HK, Supabase, breakeven
+- **Commands**:
+  - `node scripts/cost_v2.js`: Exit 0 (Arithmetic verified in USD and HKD)
+- **Exit Code**: 0
+- **Reviewer Findings & Fixes**:
+  1. Built and executed `scripts/cost_v2.js` and authored `/plan/cost_v2.md` computing exact unit economics across 3 lifecycle scenarios:
+     - Scenario 1 (First Generation): $0.0005586 USD (HK$ 0.00436)
+     - Scenario 2 (First Gen + 3 Edits): $0.0009576 USD (HK$ 0.00747)
+     - Scenario 3 (First Gen + 3 Edits + 1 Auto-Fix): $0.0011228 USD (HK$ 0.00876)
+  2. Verified Stripe HK transaction fee for HK merchants: 3.4% + HK$2.35. On HK$68/mo Pro subscription, total fee is HK$4.66 (6.86% effective take rate), netting HK$63.34 ($8.120 USD).
+  3. Included platform fixed monthly OpEx of $50.00 USD (HK$390.00: Supabase Pro $25, AWS Lightsail HK VPS $24, domain/DNS $1).
+  4. Modeled free-tier abuse vectors (up to 15 tasks/day = 450 tasks/mo = $0.2514 USD/mo per abuser) under a 3.0% free-to-paid conversion rate (32.33 free users per paying user).
+  5. Computed exact breakeven:
+     - Cohort A (Typical Free Tier): **7 paying users** (covers HK$390 OpEx + 226 free users)
+     - Cohort B (10% Heavy Abusers): **8 paying users** (covers HK$390 OpEx + 259 free users)
+     - Proved that 100% free-tier abuse at 15 tasks/day would invert unit economics (-HK$0.50 margin), demonstrating why the T15 cost guard is financially essential.
+- **Status**: PASS
+- **Next Task**: T24
+
