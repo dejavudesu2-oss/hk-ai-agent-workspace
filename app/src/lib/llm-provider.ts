@@ -21,26 +21,40 @@ You are the HK AI Agent Workspace Lead Coder.
 Your task is to write real, runnable, production-quality code based on user requests.
 
 CRITICAL FORMATTING & SYNTAX RULES:
-1. Always format every file using standard sandbox action tags:
+1. CREATING OR OVERWRITING FULL FILES:
 <sandbox_action type="file" path="relative/path/to/file.ext">
 ...file content here...
 </sandbox_action>
 
-2. If shell commands are needed, use:
+2. EDITING EXISTING FILES (SEARCH/REPLACE PATCH ACTION):
+When modifying an existing file with targeted edits, use a search/replace patch action:
+<sandbox_action type="patch" path="relative/path/to/file.ext">
+<search>
+...exact existing code to replace (must match uniquely in the file)...
+</search>
+<replace>
+...new replacement code...
+</replace>
+</sandbox_action>
+RULES FOR PATCHES:
+- The <search> text MUST match exactly one location in the file.
+- If multiple sections change, use separate <sandbox_action type="patch"> blocks.
+
+3. EXECUTING COMMANDS:
 <sandbox_action type="command">
 npm install
 </sandbox_action>
 
-3. FILE PATHS MUST BE CLEAN & RELATIVE:
+4. FILE PATHS MUST BE CLEAN & RELATIVE:
    - Always use forward slashes (e.g., "src/components/App.tsx", "index.html").
    - NEVER use Windows drive letters ("C:\\...") or Unix root paths ("/app/...").
    - NEVER use parent directory traversal ("../").
 
-4. ESCAPING CLOSING TAGS:
+5. ESCAPING CLOSING TAGS:
    - If code, documentation, or HTML contains literal "</sandbox_action>", escape the slash as "<\\/sandbox_action>".
    - In HTML <script> blocks, escape closing script tags as "<\\/script>".
 
-5. NO MARKDOWN FENCES AROUND ACTION TAGS:
+6. NO MARKDOWN FENCES AROUND ACTION TAGS:
    - Output <sandbox_action> tags directly as raw text. Do NOT wrap them in \`\`\`xml or \`\`\` blocks.
 
 Write complete, functional files without placeholders or truncation. Provide concise, helpful explanations in Traditional Chinese (繁體中文).
@@ -178,113 +192,157 @@ export class RealLLMProvider implements LLMProvider {
 
     let promptContent = message;
     if (options?.files && Object.keys(options.files).length > 0) {
+      const fileTree = Object.keys(options.files).map((p) => `  - ${p}`).join('\n');
       const fileContext = Object.entries(options.files)
         .map(([p, f]) => `--- File: ${p} ---\n${f.content}`)
         .join('\n\n');
-      promptContent = `${message}\n\n[Existing Workspace Files]:\n${fileContext}`;
+      promptContent = `${message}\n\n[Workspace File Tree]:\n${fileTree}\n\n[Existing File Contents]:\n${fileContext}`;
     }
 
-    for (const upstream of upstreams) {
+    const fetchUpstream = async (upstream: UpstreamConfig): Promise<Response> => {
+      const fetchFn = upstream.fetchFn || fetch;
+      const abortCtrl = new AbortController();
+      const timeoutMs = upstream.timeoutMs || 15000;
+
+      let timerId: any;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timerId = setTimeout(() => {
+          abortCtrl.abort();
+          reject(new Error(`Upstream ${upstream.name} timed out after ${timeoutMs}ms`));
+        }, timeoutMs);
+      });
+
+      try {
+        return await Promise.race([
+          fetchFn(`${upstream.baseUrl}/chat/completions`, {
+            method: 'POST',
+            signal: abortCtrl.signal,
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${upstream.apiKey}`,
+            },
+            body: JSON.stringify({
+              model: upstream.model,
+              stream: true,
+              stream_options: { include_usage: true },
+              max_tokens: maxTokens,
+              messages: [
+                { role: 'system', content: SYSTEM_PROMPT },
+                { role: 'user', content: promptContent },
+              ],
+            }),
+          }),
+          timeoutPromise,
+        ]);
+      } finally {
+        clearTimeout(timerId);
+      }
+    };
+
+    for (let uIdx = 0; uIdx < upstreams.length; uIdx++) {
+      const upstream = upstreams[uIdx];
       if (isBudgetExhausted()) {
         throw new Error('Daily API budget limit ($0.50 USD) exhausted. Further upstream calls aborted.');
       }
 
       try {
-        const fetchFn = upstream.fetchFn || fetch;
-        const abortCtrl = new AbortController();
-        const timeoutMs = upstream.timeoutMs || 15000;
-
-        let timerId: any;
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          timerId = setTimeout(() => {
-            abortCtrl.abort();
-            reject(new Error(`Upstream ${upstream.name} timed out after ${timeoutMs}ms`));
-          }, timeoutMs);
-        });
-
-        let response: Response;
-        try {
-          response = await Promise.race([
-            fetchFn(`${upstream.baseUrl}/chat/completions`, {
-              method: 'POST',
-              signal: abortCtrl.signal,
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${upstream.apiKey}`,
-              },
-              body: JSON.stringify({
-                model: upstream.model,
-                stream: true,
-                stream_options: { include_usage: true },
-                max_tokens: maxTokens,
-                messages: [
-                  { role: 'system', content: SYSTEM_PROMPT },
-                  { role: 'user', content: promptContent },
-                ],
-              }),
-            }),
-            timeoutPromise,
-          ]);
-        } finally {
-          clearTimeout(timerId);
-        }
+        const response = await fetchUpstream(upstream);
 
         if (!response.ok || !response.body) {
           throw new Error(`${upstream.name} responded with HTTP ${response.status}: ${response.statusText}`);
         }
 
         const encoder = new TextEncoder();
-        const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let currentReader = response.body.getReader();
+        let currentUpstream = upstream;
+        let nextUpstreamIdx = uIdx + 1;
 
         const stream = new ReadableStream({
           async start(controller) {
-            let buffer = '';
-            try {
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
+            while (true) {
+              let reachedDone = false;
+              let buffer = '';
 
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop() || '';
+              try {
+                while (true) {
+                  const { done, value } = await currentReader.read();
+                  if (done) break;
 
-                for (const line of lines) {
-                  const trimmed = line.trim();
-                  if (!trimmed || !trimmed.startsWith('data: ')) continue;
-                  if (trimmed === 'data: [DONE]') {
-                    controller.close();
-                    return;
-                  }
+                  buffer += decoder.decode(value, { stream: true });
+                  const lines = buffer.split('\n');
+                  buffer = lines.pop() || '';
 
-                  try {
-                    const parsed = JSON.parse(trimmed.slice(6));
-
-                    // Track spend from usage chunk
-                    if (parsed.usage) {
-                      const promptTok = parsed.usage.prompt_tokens || 0;
-                      const compTok = parsed.usage.completion_tokens || 0;
-                      const isDeepSeek = upstream.baseUrl.includes('deepseek');
-                      const inputRate = isDeepSeek ? 0.30 : 0.30;
-                      const outputRate = isDeepSeek ? 1.20 : 1.00;
-                      const costUSD = (promptTok * inputRate + compTok * outputRate) / 1_000_000;
-                      recordSpendUSD(costUSD);
+                  for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed || !trimmed.startsWith('data: ')) continue;
+                    if (trimmed === 'data: [DONE]') {
+                      reachedDone = true;
+                      break;
                     }
 
-                    const delta = parsed.choices?.[0]?.delta?.content;
-                    if (delta) {
-                      controller.enqueue(encoder.encode(delta));
+                    try {
+                      const parsed = JSON.parse(trimmed.slice(6));
+
+                      // Track spend from usage chunk
+                      if (parsed.usage) {
+                        const promptTok = parsed.usage.prompt_tokens || 0;
+                        const compTok = parsed.usage.completion_tokens || 0;
+                        const isDeepSeek = currentUpstream.baseUrl.includes('deepseek');
+                        const inputRate = isDeepSeek ? 0.30 : 0.30;
+                        const outputRate = isDeepSeek ? 1.20 : 1.00;
+                        const costUSD = (promptTok * inputRate + compTok * outputRate) / 1_000_000;
+                        recordSpendUSD(costUSD);
+                      }
+
+                      const delta = parsed.choices?.[0]?.delta?.content;
+                      if (delta) {
+                        controller.enqueue(encoder.encode(delta));
+                      }
+                    } catch {
+                      // Ignore incomplete JSON chunks
                     }
-                  } catch {
-                    // Ignore incomplete JSON chunks
                   }
+
+                  if (reachedDone) break;
+                }
+              } catch (midStreamErr: any) {
+                console.warn(
+                  `Upstream ${currentUpstream.name} encountered mid-stream error:`,
+                  midStreamErr.message
+                );
+                reachedDone = false;
+              } finally {
+                currentReader.releaseLock();
+              }
+
+              if (reachedDone) {
+                controller.close();
+                return;
+              }
+
+              // Mid-stream failure: attempt failover to next upstream
+              if (nextUpstreamIdx < upstreams.length) {
+                const nextUp = upstreams[nextUpstreamIdx++];
+                console.warn(`Attempting mid-stream failover to backup upstream: ${nextUp.name}`);
+                try {
+                  const nextRes = await fetchUpstream(nextUp);
+                  if (nextRes.ok && nextRes.body) {
+                    currentUpstream = nextUp;
+                    currentReader = nextRes.body.getReader();
+                    continue;
+                  }
+                } catch (failoverErr: any) {
+                  console.warn(`Failover upstream ${nextUp.name} also failed:`, failoverErr.message);
                 }
               }
+
+              // All upstreams exhausted
+              controller.enqueue(
+                encoder.encode(`\n\n[Error: Stream interrupted and all backup upstreams failed.]\n`)
+              );
               controller.close();
-            } catch (err) {
-              controller.error(err);
-            } finally {
-              reader.releaseLock();
+              return;
             }
           },
         });

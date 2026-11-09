@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { generatePreviewHtml, PREVIEW_CSP, IN_MEMORY_STORAGE_SHIM } from '../lib/preview-generator';
+import { POST as chatHandler } from '../app/api/chat/route';
+import { POST as sandboxHandler } from '../app/api/sandbox/route';
 
 test('T21 Preview Security: Exact CSP and sandbox attributes in use', () => {
   // 1. Verify exact Content Security Policy
@@ -120,28 +122,49 @@ test('T21 Preview Security: Parent checks event.source for postMessage to preven
   assert.equal(receivedError, 'Legitimate Runtime Error', 'Message from preview iframe must be accepted');
 });
 
-test('T21 Preview Security: Cross-origin isolation prevents parent cookie and localStorage access', () => {
-  // Simulate sandboxed window environment with opaque null origin
-  const mockParentWindow = {
-    document: {
-      cookie: 'session_token=secret_value_123',
-    },
-    localStorage: {
-      getItem: () => 'parent_private_data',
-    },
-  };
+test('T21 Preview Security: Backend routes strictly reject sandboxed iframe preview calls (Origin: "null")', async () => {
+  // 1. Sandboxed iframe makes fetch to /api/chat with Origin: 'null'
+  const chatReq = {
+    url: 'http://localhost/api/chat',
+    method: 'POST',
+    headers: new Map([
+      ['origin', 'null'],
+      ['content-type', 'application/json'],
+    ]),
+    json: async () => ({ message: 'steal tokens' }),
+  } as any;
 
-  // An isolated sandbox document attempting to access parent throws SecurityError
-  function sandboxedCodeAttempt(sandboxedParent: any) {
-    try {
-      // Browsers enforce Same-Origin Policy: accessing cross-origin window properties throws DOMException
-      throw new Error('Blocked a frame with origin "null" from accessing a cross-origin frame.');
-    } catch (e: any) {
-      return { blocked: true, error: e.message };
-    }
-  }
+  const chatRes = await chatHandler(chatReq);
+  assert.equal(chatRes.status, 403, 'Chat API must return 403 Forbidden when origin is "null"');
+  const chatBody = await chatRes.json();
+  assert.equal(chatBody.code, 'ORIGIN_FORBIDDEN');
 
-  const result = sandboxedCodeAttempt(mockParentWindow);
-  assert.equal(result.blocked, true);
-  assert.ok(result.error.includes('Blocked a frame with origin "null"'));
+  // 2. Sandboxed iframe makes fetch to /api/sandbox with Origin: 'null'
+  const sandboxReq = {
+    url: 'http://localhost/api/sandbox',
+    method: 'POST',
+    headers: new Map([
+      ['origin', 'null'],
+      ['content-type', 'application/json'],
+    ]),
+    json: async () => ({ command: 'cat /etc/passwd' }),
+  } as any;
+
+  const sandboxRes = await sandboxHandler(sandboxReq);
+  assert.equal(sandboxRes.status, 403, 'Sandbox API must return 403 Forbidden when origin is "null"');
+  const sandboxBody = await sandboxRes.json();
+  assert.equal(sandboxBody.code, 'ORIGIN_FORBIDDEN');
+});
+
+test('T21 Preview Security: Sandbox attribute strictly omits allow-same-origin to prevent cookie & storage access', () => {
+  const livePreviewPath = path.join(__dirname, '../components/LivePreview.tsx');
+  const livePreviewSource = fs.readFileSync(livePreviewPath, 'utf-8');
+
+  // Assert sandbox contains allow-scripts but NEVER allow-same-origin
+  const match = livePreviewSource.match(/sandbox=["']([^"']+)["']/);
+  assert.ok(match);
+  const sandboxTokens = match[1].split(/\s+/);
+  assert.ok(sandboxTokens.includes('allow-scripts'), 'Must allow scripts');
+  assert.ok(!sandboxTokens.includes('allow-same-origin'), 'Must NOT include allow-same-origin');
+  assert.ok(!sandboxTokens.includes('allow-top-navigation'), 'Must NOT allow top navigation');
 });

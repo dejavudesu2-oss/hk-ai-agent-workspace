@@ -35,6 +35,27 @@ test('applyPatch: succeeds and replaces when search text matches exactly once', 
   assert.equal(result.newContent, 'function add() {\n  return Number(a) + Number(b);\n}');
 });
 
+test('applyPatch: succeeds when originalContent has Windows CRLF line endings and searchText has LF', () => {
+  const content = 'function add() {\r\n  return a + b;\r\n}';
+  const result = applyPatch(content, '  return a + b;\n}', '  return a + b + 1;\n}');
+
+  assert.equal(result.success, true);
+  assert.equal(result.matchCount, 1);
+  assert.ok(result.newContent.includes('return a + b + 1;'));
+  assert.ok(result.newContent.includes('\r\n'), 'Should preserve CRLF when target file used CRLF');
+});
+
+test('applyPatch: succeeds when searchText has single leading/trailing newline from XML formatting', () => {
+  const content = 'const x = 1;\nconst y = 2;\nconst z = 3;';
+  // Search text with leading & trailing newlines from <search>\n...\n</search>
+  const searchText = '\nconst y = 2;\n';
+  const result = applyPatch(content, searchText, '\nconst y = 42;\n');
+
+  assert.equal(result.success, true);
+  assert.equal(result.matchCount, 1);
+  assert.equal(result.newContent, 'const x = 1;\nconst y = 42;\nconst z = 3;');
+});
+
 test('parsePatchBlock: extracts search and replace chunks correctly', () => {
   const block = `
 <search>

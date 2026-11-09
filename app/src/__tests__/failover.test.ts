@@ -136,32 +136,76 @@ test('T20 Failover: Primary is a slow stream -> Times out and fails over to Seco
   assert.equal(res.headers.get('X-LLM-Provider'), 'Secondary (SiliconFlow Fast)');
 });
 
-test('T20 Failover: Mid-stream failure does not duplicate or leave partial files half-written', () => {
+test('T20 Failover: RealLLMProvider handles mid-stream disconnect, fails over, and parser discards partial file', async () => {
+  const encoder = new TextEncoder();
+
+  // Upstream 1 emits a partial file then abruptly disconnects (throws error)
+  const brokenStream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(
+        encoder.encode(
+          `data: ${JSON.stringify({ choices: [{ delta: { content: '<sandbox_action type="file" path="app.js">\nconst halfWritten = 123;' } }] })}\n\n`
+        )
+      );
+      // Simulate socket reset mid-stream
+      controller.error(new Error('Connection reset by peer mid-stream'));
+    },
+  });
+
+  // Upstream 2 provides the complete recovery file
+  const recoveryStream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(
+        encoder.encode(
+          `data: ${JSON.stringify({ choices: [{ delta: { content: '<sandbox_action type="file" path="app.js">\nconst cleanCode = true;\nconsole.log("Complete");\n</sandbox_action>' } }] })}\n\n`
+        )
+      );
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    },
+  });
+
+  const upstreams: UpstreamConfig[] = [
+    {
+      name: 'Primary (Fails Mid-Stream)',
+      baseUrl: 'https://primary.example.com',
+      apiKey: 'k1',
+      model: 'm1',
+      fetchFn: async () =>
+        new Response(brokenStream, { status: 200, headers: { 'Content-Type': 'text/event-stream' } }),
+    },
+    {
+      name: 'Secondary (Failover Recovery)',
+      baseUrl: 'https://secondary.example.com',
+      apiKey: 'k2',
+      model: 'm2',
+      fetchFn: async () =>
+        new Response(recoveryStream, { status: 200, headers: { 'Content-Type': 'text/event-stream' } }),
+    },
+  ];
+
+  const provider = new RealLLMProvider('k1', 'k2', upstreams);
+  const res = await provider.streamChat('build me an app');
+
+  assert.equal(res.status, 200);
+
   const parser = new StreamingActionParser();
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
 
-  // 1. Initial failed upstream drops mid-stream after emitting partial file
-  const failedStreamChunk = '<sandbox_action type="file" path="app.js">\nconst halfWritten = 123;';
-  parser.feed(failedStreamChunk);
-
-  // Assert intermediate state: file in progress
-  const partialFiles = parser.getFiles();
-  assert.ok(partialFiles.has('app.js'));
-  assert.equal(partialFiles.get('app.js')?.isComplete, false);
-
-  // 2. Failover stream restarts and delivers complete, clean file
-  const failoverRecoveryStream =
-    '<sandbox_action type="file" path="app.js">\nconst cleanCode = true;\nconsole.log("Complete");\n</sandbox_action>';
-  parser.feed(failoverRecoveryStream);
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    parser.feed(decoder.decode(value, { stream: true }));
+  }
   parser.finish();
 
   const finalFiles = parser.getFiles();
   const appJs = finalFiles.get('app.js');
-  assert.ok(appJs);
-
-  // Assert: Not duplicated! Content starts fresh with cleanCode, does NOT contain halfWritten
-  assert.ok(!appJs.content.includes('halfWritten'), 'Partial file content must be discarded on failover restart');
+  assert.ok(appJs, 'app.js must exist');
+  assert.ok(!appJs.content.includes('halfWritten'), 'Partial file content must be discarded on failover');
   assert.ok(appJs.content.includes('const cleanCode = true;'));
-  assert.equal(appJs.isComplete, true, 'Recovered file must be marked complete');
+  assert.equal(appJs.isComplete, true);
 });
 
 test('T20 Failover: Both providers fail -> User sees clear error message', async () => {

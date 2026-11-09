@@ -11,6 +11,18 @@ export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
+    // 0. Security Guard: Prevent untrusted/sandboxed iframe origins ('null') from invoking sandbox API
+    const origin = req.headers?.get ? req.headers.get('origin') : null;
+    if (origin === 'null') {
+      return NextResponse.json(
+        {
+          error: 'Access denied: Sandboxed iframe preview origin is forbidden from accessing sandbox execution route.',
+          code: 'ORIGIN_FORBIDDEN',
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const { command, files } = body;
 

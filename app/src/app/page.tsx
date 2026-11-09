@@ -129,49 +129,70 @@ export default function WorkspacePage() {
 
       const currentFiles: VFSMap = { ...files };
 
-      // Initialize Streaming Action Parser
-      const parser = new StreamingActionParser({
-        onTextMessage: (delta) => {
-          setMessages((prev) =>
-            prev.map((m) => (m.id === assistantMsgId ? { ...m, text: m.text + delta } : m))
-          );
+      // Initialize Streaming Action Parser with existing files for patch support
+      const parser = new StreamingActionParser(
+        {
+          onTextMessage: (delta) => {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === assistantMsgId ? { ...m, text: m.text + delta } : m))
+            );
+          },
+          onFileStart: (filePath) => {
+            addLog(`[file] Streaming new file: ${filePath}`);
+            currentFiles[filePath] = { path: filePath, content: '' };
+            setFiles((prev) => ({
+              ...prev,
+              [filePath]: { path: filePath, content: '' },
+            }));
+            setActiveFile(filePath);
+            setOpenFiles((prev) => (prev.includes(filePath) ? prev : [...prev, filePath]));
+          },
+          onFileContent: (filePath, totalContent) => {
+            currentFiles[filePath] = { path: filePath, content: totalContent };
+            setFiles((prev) => ({
+              ...prev,
+              [filePath]: { path: filePath, content: totalContent },
+            }));
+          },
+          onFileEnd: (filePath, totalContent) => {
+            currentFiles[filePath] = { path: filePath, content: totalContent };
+            setFiles((prev) => ({
+              ...prev,
+              [filePath]: { path: filePath, content: totalContent },
+            }));
+            addLog(`[file] Completed file: ${filePath}`);
+          },
+          onFilePatch: (filePath, _s, _r, success, error) => {
+            if (success) {
+              const patchedContent = parser.getFiles().get(filePath)?.content || '';
+              currentFiles[filePath] = { path: filePath, content: patchedContent };
+              setFiles((prev) => ({
+                ...prev,
+                [filePath]: { path: filePath, content: patchedContent },
+              }));
+              addLog(`[patch] Successfully applied patch to: ${filePath}`);
+            } else {
+              addLog(`[patch error] Failed to patch ${filePath}: ${error}`);
+            }
+          },
+          onCommand: async (cmd) => {
+            addLog(`[cmd] Executing sandbox command: ${cmd}`);
+            try {
+              const sandboxRes = await fetch('/api/sandbox', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: cmd, files: currentFiles }),
+              });
+              const data = await sandboxRes.json();
+              if (data.stdout) addLog(data.stdout);
+              if (data.stderr) addLog(`[error] ${data.stderr}`);
+            } catch (e: any) {
+              addLog(`[error] Sandbox execution failed: ${e.message}`);
+            }
+          },
         },
-        onFileStart: (filePath) => {
-          addLog(`[file] Streaming new file: ${filePath}`);
-          currentFiles[filePath] = { path: filePath, content: '' };
-          setFiles((prev) => ({
-            ...prev,
-            [filePath]: { path: filePath, content: '' },
-          }));
-          setActiveFile(filePath);
-          setOpenFiles((prev) => (prev.includes(filePath) ? prev : [...prev, filePath]));
-        },
-        onFileContent: (filePath, totalContent) => {
-          currentFiles[filePath] = { path: filePath, content: totalContent };
-          setFiles((prev) => ({
-            ...prev,
-            [filePath]: { path: filePath, content: totalContent },
-          }));
-        },
-        onFileEnd: (filePath) => {
-          addLog(`[file] Completed file: ${filePath}`);
-        },
-        onCommand: async (cmd) => {
-          addLog(`[cmd] Executing sandbox command: ${cmd}`);
-          try {
-            const sandboxRes = await fetch('/api/sandbox', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ command: cmd, files: currentFiles }),
-            });
-            const data = await sandboxRes.json();
-            if (data.stdout) addLog(data.stdout);
-            if (data.stderr) addLog(`[error] ${data.stderr}`);
-          } catch (e: any) {
-            addLog(`[error] Sandbox execution failed: ${e.message}`);
-          }
-        },
-      });
+        files
+      );
 
       while (true) {
         const { done, value } = await reader.read();

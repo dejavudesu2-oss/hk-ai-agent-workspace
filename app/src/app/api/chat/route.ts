@@ -14,6 +14,21 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
+    // 0. Security Guard: Prevent untrusted/sandboxed iframe origins ('null') from invoking API
+    const origin = req.headers?.get ? req.headers.get('origin') : null;
+    if (origin === 'null') {
+      return new Response(
+        JSON.stringify({
+          error: 'Access denied: Sandboxed iframe preview origin is forbidden from accessing backend chat route.',
+          code: 'ORIGIN_FORBIDDEN',
+        }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     const clientIp = extractClientIp(req.headers);
 
     // 1. Daily budget / emergency kill switch check (returns 503 if exhausted)
