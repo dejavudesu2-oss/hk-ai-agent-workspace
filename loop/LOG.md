@@ -530,3 +530,20 @@
 - **Status**: PASS
 - **Next Task**: T33
 
+## [iter 1] T33
+- **Task**: T33 COST LABELS: Token counts, prices per 1M, USD, HKD, cumulative vs per-turn, tagged [mock], [assumption] or [measured]; retag cost.md, readiness.md, README.md
+- **Commands**:
+  - `node scripts/cost_v2.js`: Exit 0
+  - Authored `/plan/cost.md` with full per-turn and cumulative breakdown
+  - Updated `/plan/readiness.md` and `README.md`
+- **Exit Code**: 0
+- **Findings & Fixes**:
+  1. Detailed each lifecycle scenario in `/plan/cost.md`:
+     - Scenario 1 (1st Gen): Turn 1 = $0.002315 USD (HK$ 0.01806) [mock]
+     - Scenario 2 (1st + 3 Edits): Turn 1 = $0.002315 [mock], Turn 2 = $0.000436 [assumption], Turn 3 = $0.000439 [assumption], Turn 4 = $0.000439 [assumption]; Cumulative = $0.003624 USD (HK$ 0.02827) [assumption]
+     - Scenario 3 (1st + 3 + Fix): Turns 1-4 = $0.003624, Turn 5 (Watchdog repair) = $0.000594 [assumption]; Cumulative = $0.004218 USD (HK$ 0.03290) [assumption]
+  2. Clearly identified hit tokens (900 / 9,000 / 13,000 @ $0.006/1M), miss tokens (300 / 1,500 / 2,000 @ $0.300/1M), and output tokens (1,850 / 2,600 / 2,950 @ $1.200/1M).
+  3. Relabeled all figures across `/plan/cost.md`, `/plan/readiness.md`, and `README.md` with explicit tags: `[mock]`, `[assumption]`, or `[verified: arithmetic]`. Confirmed no mock-derived number is tagged `[measured]`.
+- **Status**: PASS
+- **Next Task**: T34
+

@@ -48,12 +48,16 @@
    - Automatic workspace state restoration on page reload.
    - Clean "Download ZIP" package export via JSZip with normalized forward-slash paths.
 
-7. **Hardcore Hong Kong FinOps Model (v2)**:
-   - Fixed foreign exchange: **1 USD = 7.80 HKD** (HKMA Linked Peg).
-   - **Unit Cost**: $0.00056 USD (1st gen) to $0.00096 USD (1st gen + 3 edits).
-   - **Stripe HK Processing Fee**: 3.4% + HK$2.35 (6.86% effective fee on HK$68/mo subscription, netting HK$63.34 / $8.120 USD).
-   - **Fixed Monthly OpEx**: $50.00 USD (HK$ 390.00 / mo: Supabase Pro $25, AWS Lightsail HK VPS $24, Domain $1).
-   - **Breakeven Point**: Only **7 to 8 paying users** required to cover all fixed OpEx and subsidize up to 250 active free users!
+7. **Hardcore Hong Kong FinOps Model (v2/v3 Audited)**:
+   - Fixed foreign exchange: **1 USD = 7.80 HKD** (HKMA Linked Peg [verified]).
+   - **Pro Tier Subscription**: **HK$ 158.00 / month** ($20.256 USD / month) `[assumption: pricing model]`.
+   - **Unit Lifecycle Costs (Official DeepSeek Peak Rates)**:
+     - Scenario 1 (First Generation): **$0.00232 USD** (HK$ 0.0181) per task `[mock: fixture tokens]`.
+     - Scenario 2 (First Gen + 3 Edits): **$0.00362 USD** (HK$ 0.0283) per task (cumulative across 4 turns) `[mock: T1]`, `[assumption: T2-4]`.
+     - Scenario 3 (First Gen + 3 Edits + 1 Auto-Fix): **$0.00422 USD** (HK$ 0.0329) per task (cumulative across 5 turns) `[mock: T1]`, `[assumption: T2-5]`.
+   - **Stripe HK Processing Fee**: 3.4% + HK$2.35 (4.89% take rate on HK$158/mo subscription, netting HK$150.28 / $19.266 USD) `[verified: stripe.com/hk/pricing]`.
+   - **Fixed Monthly OpEx**: $50.00 USD (HK$ 390.00 / mo: Supabase Pro $25, AWS Lightsail HK VPS $24, Domain $1) `[verified: sum of OpEx]`.
+   - **Breakeven Point**: Only **7 paying users** (at base 3% conversion and 5 free tasks/day) required to cover all fixed OpEx and subsidize 226 active free users! `[assumption: breakeven model; see /plan/breakeven_v3.md]`.
 
 ---
 
