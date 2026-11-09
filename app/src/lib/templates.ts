@@ -2,14 +2,65 @@
  * Production-ready templates for prompt demonstration and instant offline fallback
  */
 
+export interface TemplatePatch {
+  path: string;
+  search: string;
+  replace: string;
+}
+
 export interface TemplateProject {
   promptMatch: RegExp;
   description: string;
   files: { path: string; content: string }[];
+  patches?: TemplatePatch[];
   command?: string;
 }
 
 export const DEMO_TEMPLATES: TemplateProject[] = [
+  {
+    promptMatch: /(blue.*delete-all|delete-all.*blue|make the add button blue and add a delete-all button|藍色.*刪除|按鈕.*藍色)/i,
+    description: 'Edit Turn: Update Add Button to vibrant blue and append Delete All button via patches',
+    files: [],
+    patches: [
+      {
+        path: 'styles.css',
+        search: `.btn-add {
+  background: var(--primary);`,
+        replace: `.btn-add {
+  background: #2563eb; /* Vibrant royal blue */`,
+      },
+      {
+        path: 'index.html',
+        search: `      <button id="btnClearCompleted" class="btn-clear">清除已完成</button>
+    </div>`,
+        replace: `      <button id="btnClearCompleted" class="btn-clear">清除已完成</button>
+      <button id="btnDeleteAll" class="btn-clear" style="color: #ef4444; margin-left: 8px;">刪除全部</button>
+    </div>`,
+      },
+      {
+        path: 'app.js',
+        search: `  btnClearCompleted.addEventListener('click', () => {
+    todos = todos.filter((t) => !t.completed);
+    saveTodos();
+    render();
+  });`,
+        replace: `  btnClearCompleted.addEventListener('click', () => {
+    todos = todos.filter((t) => !t.completed);
+    saveTodos();
+    render();
+  });
+
+  const btnDeleteAll = document.getElementById('btnDeleteAll');
+  if (btnDeleteAll) {
+    btnDeleteAll.addEventListener('click', () => {
+      todos = [];
+      saveTodos();
+      render();
+    });
+  }`,
+      },
+    ],
+  },
   {
     promptMatch: /(todo|待辦|task|checklist)/i,
     description: 'Modern Interactive Todo Application with LocalStorage, Filter Tags & Hong Kong Task Presets',

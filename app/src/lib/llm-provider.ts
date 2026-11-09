@@ -65,6 +65,14 @@ export class MockLLMProvider implements LLMProvider {
       parts.push(`<sandbox_action type="file" path="${file.path}">\n${file.content}\n</sandbox_action>\n\n`);
     }
 
+    if (template.patches && template.patches.length > 0) {
+      for (const patch of template.patches) {
+        parts.push(
+          `<sandbox_action type="patch" path="${patch.path}">\n<search>\n${patch.search}\n</search>\n<replace>\n${patch.replace}\n</replace>\n</sandbox_action>\n\n`
+        );
+      }
+    }
+
     if (template.command) {
       parts.push(`<sandbox_action type="command">\n${template.command}\n</sandbox_action>\n\n`);
     }

@@ -353,3 +353,15 @@
   5. System prompt: Hardened `SYSTEM_PROMPT` in `app/src/lib/llm-provider.ts` with explicit escaping and path rules.
 - **Status**: PASS
 - **Next Task**: T18
+
+## [iter 5] T18
+- **Task**: T18 EDIT TURNS: Send file tree + relevant contents, support search/replace patch action, reject non-single matches
+- **Commands**:
+  - `npm test`: 47/47 tests passed (5 new dedicated tests for single-match rejection, ambiguity rejection, patch extraction, and full 2-turn edit flow)
+- **Exit Code**: 0
+- **Reviewer Findings & Fixes**:
+  1. Implemented `app/src/lib/patch.ts` with strict 1-match invariant: rejects patches if search text matches 0 times or >1 times.
+  2. Integrated patch action `<sandbox_action type="patch" path="...">` containing `<search>` and `<replace>` into `StreamingActionParser`.
+  3. Verified multi-turn scenario: Turn 1 creates Todo app (`package.json`, `styles.css`, `app.js`, `index.html`); Turn 2 applies patch modifying Add Button color to `#2563eb` and adding `btnDeleteAll`. Verified `package.json` was untouched and preview renders with CSP and watchdog.
+- **Status**: PASS
+- **Next Task**: T19

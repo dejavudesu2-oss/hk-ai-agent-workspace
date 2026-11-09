@@ -6,6 +6,7 @@
  */
 
 import { normalizePath } from './vfs';
+import { applyPatch, parsePatchBlock } from './patch';
 
 export interface ParsedFile {
   path: string;
@@ -19,10 +20,11 @@ export interface StreamParserCallbacks {
   onFileStart?: (path: string) => void;
   onFileContent?: (path: string, content: string, delta: string) => void;
   onFileEnd?: (path: string, totalContent: string) => void;
+  onFilePatch?: (path: string, search: string, replace: string, success: boolean, error?: string) => void;
   onCommand?: (command: string) => void;
 }
 
-type ParserState = 'TEXT' | 'FILE_CONTENT' | 'COMMAND_CONTENT';
+type ParserState = 'TEXT' | 'FILE_CONTENT' | 'COMMAND_CONTENT' | 'PATCH_CONTENT';
 
 export class StreamingActionParser {
   private buffer: string = '';
@@ -30,11 +32,26 @@ export class StreamingActionParser {
   private currentFilePath: string = '';
   private currentFileContent: string = '';
   private currentCommandContent: string = '';
+  private currentPatchContent: string = '';
   private callbacks: StreamParserCallbacks;
   private files: Map<string, ParsedFile> = new Map();
 
-  constructor(callbacks: StreamParserCallbacks = {}) {
+  constructor(
+    callbacks: StreamParserCallbacks = {},
+    initialFiles?: Map<string, ParsedFile> | Record<string, { path: string; content: string }>
+  ) {
     this.callbacks = callbacks;
+    if (initialFiles) {
+      if (initialFiles instanceof Map) {
+        for (const [k, v] of initialFiles.entries()) {
+          this.files.set(k, { ...v });
+        }
+      } else {
+        for (const [k, v] of Object.entries(initialFiles)) {
+          this.files.set(k, { path: v.path || k, content: v.content || '', isComplete: true });
+        }
+      }
+    }
   }
 
   /**
@@ -66,6 +83,12 @@ export class StreamingActionParser {
         this.buffer = '';
       }
       this.closeCurrentCommand();
+    } else if (this.state === 'PATCH_CONTENT' && this.currentFilePath) {
+      if (this.buffer.length > 0) {
+        this.currentPatchContent += this.buffer;
+        this.buffer = '';
+      }
+      this.closeCurrentPatch();
     } else if (this.buffer.length > 0) {
       // Strip any stray artifact tags before final flush
       const cleanText = this.cleanArtifactTags(this.buffer);
@@ -176,6 +199,11 @@ export class StreamingActionParser {
             this.state = 'FILE_CONTENT';
           }
           advanced = true;
+        } else if (actionType === 'patch' && filePath) {
+          this.currentFilePath = filePath;
+          this.currentPatchContent = '';
+          this.state = 'PATCH_CONTENT';
+          advanced = true;
         } else if (actionType === 'command' || actionType === 'shell') {
           if (!isSelfClosing) {
             this.state = 'COMMAND_CONTENT';
@@ -259,6 +287,36 @@ export class StreamingActionParser {
         this.closeCurrentCommand();
         this.state = 'TEXT';
         advanced = true;
+      } else if (this.state === 'PATCH_CONTENT') {
+        const openMatchIdx = this.findOpeningTagIndex(this.buffer);
+        const closeMatch = this.findClosingTag(this.buffer);
+
+        if (openMatchIdx !== -1 && (closeMatch === null || openMatchIdx < closeMatch.index)) {
+          this.currentPatchContent += this.buffer.substring(0, openMatchIdx);
+          this.closeCurrentPatch();
+          this.buffer = this.buffer.substring(openMatchIdx);
+          this.state = 'TEXT';
+          advanced = true;
+          continue;
+        }
+
+        if (!closeMatch) {
+          const partialIndex = this.findPartialClosingTagIndex(this.buffer);
+          if (partialIndex !== -1) {
+            this.currentPatchContent += this.buffer.substring(0, partialIndex);
+            this.buffer = this.buffer.substring(partialIndex);
+          } else {
+            this.currentPatchContent += this.buffer;
+            this.buffer = '';
+          }
+          break;
+        }
+
+        this.currentPatchContent += this.buffer.substring(0, closeMatch.index);
+        this.buffer = this.buffer.substring(closeMatch.index + closeMatch.length);
+        this.closeCurrentPatch();
+        this.state = 'TEXT';
+        advanced = true;
       }
     }
   }
@@ -293,6 +351,46 @@ export class StreamingActionParser {
       this.callbacks.onCommand?.(cmd);
     }
     this.currentCommandContent = '';
+  }
+
+  private closeCurrentPatch(): void {
+    if (!this.currentFilePath) return;
+    const parsed = parsePatchBlock(this.currentPatchContent);
+    if (!parsed) {
+      this.callbacks.onFilePatch?.(
+        this.currentFilePath,
+        '',
+        '',
+        false,
+        'Malformed patch: missing <search> or <replace> tags'
+      );
+      this.currentFilePath = '';
+      this.currentPatchContent = '';
+      return;
+    }
+
+    const file = this.files.get(this.currentFilePath);
+    if (!file) {
+      const err = `Target file not found in VFS: ${this.currentFilePath}`;
+      this.callbacks.onFilePatch?.(this.currentFilePath, parsed.search, parsed.replace, false, err);
+      this.callbacks.onTextMessage?.(`\n⚠️ ${err}\n`);
+      this.currentFilePath = '';
+      this.currentPatchContent = '';
+      return;
+    }
+
+    const res = applyPatch(file.content, parsed.search, parsed.replace);
+    if (res.success) {
+      file.content = res.newContent;
+      this.callbacks.onFileEnd?.(this.currentFilePath, res.newContent);
+      this.callbacks.onFilePatch?.(this.currentFilePath, parsed.search, parsed.replace, true);
+    } else {
+      this.callbacks.onFilePatch?.(this.currentFilePath, parsed.search, parsed.replace, false, res.error);
+      this.callbacks.onTextMessage?.(`\n⚠️ ${res.error}\n`);
+    }
+
+    this.currentFilePath = '';
+    this.currentPatchContent = '';
   }
 
   private findOpeningTagIndex(text: string): number {
