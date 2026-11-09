@@ -9,5 +9,5 @@
     "total_tokens": 2330
   },
   "costUSD": 0.001851,
-  "note": "Representative real LLM fixture with live failure patterns"
+  "note": "Representative mock LLM fixture with synthetic failure patterns"
 }

@@ -1,76 +1,73 @@
 # FinOps Cost Model v2 (`/plan/cost_v2.md`)
 
-## 1. Executive Summary & Verification State
+## 1. Executive Summary & Provenance Audit State
 
-This document replaces the initial blueprint estimates ($0.0275) and the preliminary T03 estimates with an audited, end-to-end unit economics model. All token counts are directly grounded in the T16 fixture measurements, accounting for DeepSeek disk cache hits, multi-turn patch diffs, Stripe HK fee structures, and free-tier abuse vectors.
+This document contains the audited unit economics model following the Task T26 & T28 sanity audit. All earlier preliminary numbers ($0.000559, $0.000958, $0.001123) have been formally **retracted** because they relied on an erroneous output token rate ($0.28/1M instead of DeepSeek-Flash's official $1.20 peak rate). 
 
-**Key Findings**:
-- **Scenario 1 (1st Gen)**: **$0.000559 USD** (HK$ 0.00436) per task
-- **Scenario 2 (1st Gen + 3 Edits)**: **$0.000958 USD** (HK$ 0.00747) per task
-- **Scenario 3 (1st Gen + 3 Edits + 1 Auto-Fix)**: **$0.001123 USD** (HK$ 0.00876) per task
-- **Stripe HK Effective Take Rate on HK$68/mo**: **6.86%** (3.4% + HK$2.35 = HK$4.66 fee, netting HK$63.34 / $8.120 USD)
-- **Breakeven (Typical Freemium Cohort, 3% conversion)**: **7 paying users** (covering HK$390 / $50 fixed OpEx plus 226 free users)
-- **Breakeven (10% Heavy Abuse at 15 tasks/day)**: **8 paying users** (covering fixed OpEx plus 259 free users)
-
----
-
-## 2. Model Pricing & Token Assumptions
-
-Pricing is based on DeepSeek-V3 / deepseek-chat peak production rates (off-peak is 50% lower, but modeled conservatively at peak):
-
-| Token Category | Cost per 1M Tokens (USD) | Cost per 1k Tokens (USD) | Source & Status |
-| :--- | :--- | :--- | :--- |
-| **Input Cache Hit** | $0.0140 | $0.0000140 | Published DeepSeek API rate [Verified] |
-| **Input Cache Miss** | $0.1400 | $0.0001400 | Published DeepSeek API rate [Verified] |
-| **Output Tokens** | $0.2800 | $0.0002800 | Published DeepSeek API rate [Verified] |
-| **USD/HKD Exchange Rate** | 7.8000 | N/A | HKD Peg [Verified] |
+**Key Audited Findings (Peak DeepSeek Rates)**:
+- **Scenario 1 (1st Gen)**: **$0.002315 USD** (HK$ 0.01806) per task [retracted $0.000559]
+- **Scenario 2 (1st Gen + 3 Edits)**: **$0.003624 USD** (HK$ 0.02827) per task [retracted $0.000958]
+- **Scenario 3 (1st Gen + 3 Edits + 1 Auto-Fix)**: **$0.004218 USD** (HK$ 0.03290) per task [retracted $0.001123]
+- **Pro Tier Subscription**: Reconciled to **HK$ 158.00 / month** ($20.256 USD / month) per architectural blueprint.
+- **Stripe HK Effective Take Rate on HK$158/mo**: **4.89%** (3.4% + HK$2.35 = HK$7.722 fee, netting HK$150.278 / $19.266 USD).
+- **Breakeven (Target Cohort: 3% conversion, 5 free tasks/day)**: **7 paying users** (covering HK$390 / $50 fixed OpEx plus 226 free users). Full 3x3 matrix in `/plan/breakeven_v3.md`.
 
 ---
 
-## 3. The 3 Lifecycle Scenarios (Measured Tokens)
+## 2. Corrected Official Model Pricing (DeepSeek-Flash)
+
+Pricing is based on DeepSeek's official published rates (`api-docs.deepseek.com/quick_start/pricing` [verified]):
+
+| Token Category | Peak Rates / 1M (USD) | Off-Peak / 1M (USD) | Per 1k Tokens Peak (USD) | Source & Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Input Cache Hit** | $0.0060 | $0.0030 | $0.0000060 | Published DeepSeek API rate [Verified: URL] |
+| **Input Cache Miss** | $0.3000 | $0.1500 | $0.0003000 | Published DeepSeek API rate [Verified: URL] |
+| **Output Tokens** | $1.2000 | $0.6000 | $0.0012000 | Published DeepSeek API rate [Verified: URL] |
+| **USD/HKD Exchange Rate** | 7.8000 | 7.8000 | N/A | HKMA Linked Exchange Rate [Verified] |
+
+---
+
+## 3. The 3 Lifecycle Scenarios (Audited Arithmetic)
 
 ### Scenario 1: First Generation (1 Prompt Turn)
 - **User Action**: Initial prompt to create application (e.g. "build me a todo app").
 - **Tokens**:
-  - Prompt: 1,200 tokens (System prompt ~950 tok + user prompt ~250 tok)
+  - Prompt: 1,200 tokens (System prompt ~900 tok + user prompt ~300 tok)
   - Cache Hit: 900 tokens (system prompt prefix match)
   - Cache Miss: 300 tokens (unique user prompt)
-  - Output: 1,800 tokens (complete files: HTML, CSS, JS)
+  - Output: 1,850 tokens (complete files: HTML, CSS, JS)
 - **Arithmetic**:
-  $$\text{Hit Cost} = \frac{900 \times \$0.014}{1,000,000} = \$0.0000126$$
-  $$\text{Miss Cost} = \frac{300 \times \$0.14}{1,000,000} = \$0.0000420$$
-  $$\text{Output Cost} = \frac{1,800 \times \$0.28}{1,000,000} = \$0.0005040$$
-  $$\mathbf{Cost_{S1} = \$0.0005586\text{ USD (HK\$ 0.004357)}}$$
-
----
+  $$\text{Hit Cost} = \frac{900 \times \$0.006}{1,000,000} = \$0.0000054$$
+  $$\text{Miss Cost} = \frac{300 \times \$0.30}{1,000,000} = \$0.0000900$$
+  $$\text{Output Cost} = \frac{1,850 \times \$1.20}{1,000,000} = \$0.0022200$$
+  $$\mathbf{Cost_{S1} = \$0.0023154\text{ USD (HK\$ 0.018060)}}$$
 
 ### Scenario 2: First Generation + 3 Edits (4 Prompt Turns)
-- **User Action**: Generates app, then executes 3 sequential patch edits (e.g. "make button blue", "add clear button", "fix layout").
+- **User Action**: Generates app, then executes 3 sequential patch edits using search/replace.
 - **Tokens**:
-  - Cumulative Prompt: 6,600 tokens (Input cache hit: 5,400 tok; Cache miss: 1,200 tok)
-  - Cumulative Output: 2,550 tokens (Initial files 1,800 tok + 3 targeted patches @ 250 tok each)
+  - Cumulative Prompt: 10,500 tokens (Input cache hit: 9,000 tok; Cache miss: 1,500 tok)
+  - Cumulative Output: 2,600 tokens (Initial files 1,850 tok + 3 targeted patches @ 250 tok each)
 - **Arithmetic**:
-  $$\text{Hit Cost} = \frac{5,400 \times \$0.014}{1,000,000} = \$0.0000756$$
-  $$\text{Miss Cost} = \frac{1,200 \times \$0.14}{1,000,000} = \$0.0001680$$
-  $$\text{Output Cost} = \frac{2,550 \times \$0.28}{1,000,000} = \$0.0007140$$
-  $$\mathbf{Cost_{S2} = \$0.0009576\text{ USD (HK\$ 0.007469)}}$$
-
----
+  $$\text{Hit Cost} = \frac{9,000 \times \$0.006}{1,000,000} = \$0.0000540$$
+  $$\text{Miss Cost} = \frac{1,500 \times \$0.30}{1,000,000} = \$0.0004500$$
+  $$\text{Output Cost} = \frac{2,600 \times \$1.20}{1,000,000} = \$0.0031200$$
+  $$\mathbf{Cost_{S2} = \$0.0036240\text{ USD (HK\$ 0.028267)}}$$
 
 ### Scenario 3: First Generation + 3 Edits + 1 Auto-Fix (5 Prompt Turns)
-- **User Action**: Same as Scenario 2, plus browser watchdog catches an uncaught JS error and triggers AI self-healing repair.
+- **User Action**: Same as Scenario 2, plus watchdog catches an uncaught runtime error and triggers automated repair.
 - **Tokens**:
-  - Cumulative Prompt: 8,700 tokens (Input cache hit: 7,200 tok; Cache miss: 1,500 tok)
-  - Cumulative Output: 2,900 tokens (Initial files + 3 patches + 1 patch repair @ 350 tok)
+  - Cumulative Prompt: 15,000 tokens (Input cache hit: 13,000 tok; Cache miss: 2,000 tok)
+  - Cumulative Output: 2,950 tokens (Initial files + 3 patches + 1 patch repair @ 350 tok)
 - **Arithmetic**:
-  $$\text{Hit Cost} = \frac{7,200 \times \$0.014}{1,000,000} = \$0.0001008$$
-  $$\text{Miss Cost} = \frac{1,500 \times \$0.14}{1,000,000} = \$0.0002100$$
-  $$\text{Output Cost} = \frac{2,900 \times \$0.28}{1,000,000} = \$0.0008120$$
-  $$\mathbf{Cost_{S3} = \$0.0011228\text{ USD (HK\$ 0.008758)}}$$
+  $$\text{Hit Cost} = \frac{13,000 \times \$0.006}{1,000,000} = \$0.0000780$$
+  $$\text{Miss Cost} = \frac{2,000 \times \$0.30}{1,000,000} = \$0.0006000$$
+  $$\text{Output Cost} = \frac{2,950 \times \$1.20}{1,000,000} = \$0.0035400$$
+  $$\mathbf{Cost_{S3} = \$0.0042180\text{ USD (HK\$ 0.032900)}}$$
 
 ---
 
 ## 4. Platform Fixed OpEx & Payment Gateway Fees
+
 
 ### Fixed Monthly Infrastructure OpEx
 | Service | Provider & Spec | Monthly Cost (USD) | Monthly Cost (HKD) |
