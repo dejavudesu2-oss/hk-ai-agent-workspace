@@ -2,7 +2,7 @@
 
 ## 1. Overview of GitHub Actions CI Pipeline
 
-The pipeline is defined in [`.github/workflows/ci.yml`](file:///C:/Users/rain2/.gemini/antigravity/scratch/hk-ai-agent-workspace/.github/workflows/ci.yml) and runs on all pushes and pull requests to `master` and `main`. It contains two separate jobs:
+The pipeline is defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) and runs on all pushes and pull requests to `master` and `main`. It contains two separate jobs:
 
 ### Job 1: `build-and-test`
 - **Environment**: `ubuntu-latest` with Node.js 20.
