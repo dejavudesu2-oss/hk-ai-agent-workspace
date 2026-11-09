@@ -43,12 +43,14 @@
   2. 嚴格 cgroups v2 資源限制：單容器限制 CPU 0.5 核、記憶體 256MB、PID 上限 64、執行超時 15 秒強殺。
   3. Egress 出網白名單：僅放行特定公共 CDN 及 npm 鏡像 (registry.npmjs.org, unpkg.com, cdn.tailwindcss.com)，阻斷內網 RFC1918 (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) 與雲端元數據服務 (169.254.169.254)。
 
-### R04. 沙盒 Iframe 腳本逃逸讀取父頁面 Cookie 與 DOM (XSS Escape)
-* **風險描述**：若 Iframe 的 sandbox 屬性同時包含 `allow-scripts` 與 `allow-same-origin`，生成的惡意代碼可透過 `window.parent.document` 竊取父頁面的 localStorage、Stripe 金鑰或竄改介面 [verified: MDN Web Docs]。
+#### R04. 沙盒 Iframe 腳本逃逸讀取父頁面 Cookie 與 DOM (XSS Escape & Storage Denied)
+* **風險描述**：若 Iframe 的 sandbox 屬性同時包含 `allow-scripts` 與 `allow-same-origin`，生成的惡意代碼可透過 `window.parent.document` 竊取父頁面的 localStorage、Stripe 金鑰或竄改介面 [verified: MDN Web Docs]。同時，若剔除 `allow-same-origin`，瀏覽器會直接對 `localStorage` 拋出 `DOMException: Access is denied for this document`，導致生成之 React 組件白屏崩潰。
 * **緩解防禦方案**：
   1. Iframe 嚴格配置 `sandbox="allow-scripts allow-modals allow-forms"`，**堅決剔除 `allow-same-origin`**。
-  2. 瀏覽器自動將該 Iframe 標記為不透明的 `null` 來源 (`origin: "null"`)，任何跨域 DOM 訪問均會被瀏覽器內核直接阻斷拋出 SecurityError。
-  3. 頁面注入嚴格的 Content-Security-Policy (CSP) meta 標籤。
+  2. 瀏覽器自動將該 Iframe 標記為不透明的 `null` 來源 (`origin: "null"`)，任何跨域 DOM/Cookie 訪問均會被瀏覽器內核直接阻斷拋出 SecurityError。
+  3. **內存存儲 Shim (Storage Shim)**：注入 `IN_MEMORY_STORAGE_SHIM`，主動探測存儲權限，在被沙盒阻斷時透明以內存 Map polyfill `Storage` 接口 (`getItem`, `setItem`, `removeItem`, `clear`, `length`)，防止應用崩潰。
+  4. **PostMessage 來源校驗**：父頁面監聽器嚴格校驗 `event.source === iframeRef.current.contentWindow`，防止其他 null-origin 框架偽造報錯事件。
+  5. 頁面注入嚴格的 Content-Security-Policy (CSP) meta 標籤。
 
 ### R05. LLM 生成語法錯誤代碼導致預覽黑屏死鎖
 * **風險描述**：AI 偶爾會輸出缺失括號或未定義變量的代碼，導致 React 運行時報錯，預覽視窗白屏，用戶誤以為平台當機而流失 [assumption]。
@@ -57,17 +59,21 @@
   2. 捕獲到報錯時透過 `postMessage` 向父頁面回傳，在預覽視窗上方展示防護 Banner：「⚠️ 報錯看門狗已觸發，點擊一鍵 AI 修復」。
   3. 點擊修復時自動將錯誤 Stack Trace 送回 LLM 進行自癒修復，預覽自動熱更新恢復。
 
-### R06. 惡意用戶編寫自動化腳本刷高頻會話擊穿 API Token 成本
-* **風險描述**：羊毛黨或爬蟲透過無限制調用 API，在幾小時內耗盡創始人 API 賬戶餘額 [assumption]。
+### R06. 惡意用戶或爬蟲高頻刷會話擊穿 API Token 成本 (Financial Circuit Breaker)
+* **風險描述**：羊毛黨或爬蟲透過無限制調用 API，在幾小時內耗盡創始人 API 賬戶餘額。T23 測算證實：若 100% 免費用戶達到 15 次/天上限，邊際貢獻將轉為負數 (-HK$0.50/用戶) [verified: scripts/cost_v2.js]。
 * **緩解防禦方案**：
-  1. 每日配額硬性限制：免費用戶每天嚴格限制 15 次會話生成；Pro 付費用戶限制 200 次/天防刷熔斷。
-  2. 單次會話超時限制與前端 5 秒防抖（Debounce）節流。
-  3. Cloudflare 開啟 Bot Fight Mode 及香港邊緣 WAF 規則 [verified: Cloudflare docs]。
+  1. **T15 成本熔斷護衛 (Cost Guard)**：
+     - 單 IP 滑動窗口限流 (30 req / 10 分鐘)。
+     - 輸入長度硬頂 (12,000 字符) 及輸出 `max_tokens` 限制 (4,096 tokens)。
+     - 全局每日預算熔斷開關 ($0.50 USD 硬頂)，從 DeepSeek usage 字段累計消費，超額即刻阻斷上游調用返回 HTTP 503。
+     - 邀請碼機制 (Invite Code Gate)：未獲授權之匿名流量無法調用真模型。
+  2. Cloudflare 開啟 Bot Fight Mode 及香港邊緣 WAF 規則 [verified: Cloudflare docs]。
 
-### R07. Serverless 雲函數 10-15s 執行逾時強制截斷代碼串流
-* **風險描述**：若部署在 Vercel 或 Cloudflare Pages 免費版，其 Serverless 函數存在 10-15 秒嚴格執行超時。LLM 生成大項目代碼時耗時通常需 20-40 秒，會直接觸發 `FUNCTION_INVOCATION_TIMEOUT` 異常中斷 [verified: Vercel docs]。
+### R07. Serverless 雲函數 10-15s 執行逾時與靜態導出矛盾
+* **風險描述**：早期筆記提及靜態導出 (`output: 'export'`)，但項目包含 `/api/chat` 與 `/api/sandbox` 動態路由，靜態導出無法編譯。若部署於免費 Serverless，10-15s 超時會截斷大模型代碼串流 [verified: T14 Audit & Vercel docs]。
 * **緩解防禦方案**：
-  1. **Docker-First 原生容器化部署**：將 Next.js 應用構建為標準 Docker 鏡像，運行於香港本地 VPS 上，使用 Node.js 原生 HTTP 串流服務，徹底破除任何時間上限 [verified: Docker docs]。
+  1. **VPS 原生 Node.js 服務器運行 (`next start`)**：Next.js 構建保留動態 API 路由，運行於 AWS Lightsail HK VPS，消除任何執行時長限制。
+  2. **上游雙路容災與超時競態 (T20)**：`Promise.race` 設置 15s 首字超時，主力 DeepSeek 遇 429/503 或卡流自動切換至硅基流動備援。
 
 ### R08. 香港 PCPD 個人資料私隱審查及代碼數據洩露風險
 * **風險描述**：香港個人資料私隱專員公署 (PCPD) 於 2024 年發布了嚴格的生成式 AI 數據指引。若用戶代碼包含商業機密或個人數據，且被用於模型訓練，將面臨法律合規處罰 [verified: PCPD 2024 AI Guidelines]。

@@ -26,4 +26,4 @@
 | **T22** | CROSS-PLATFORM + CI: Replace curl.exe with Node fetch, backslash/traversal tests, GitHub Actions CI | `npm test` runs fetch test; CI workflow created with 2 jobs | DONE | 1 |
 | **T23** | COST MODEL v2: Real/assumed usage across 3 scenarios, free abuse, Stripe HK, Supabase, breakeven | `node scripts/cost_v2.js` and `/plan/cost_v2.md` show arithmetic in USD and HKD | DONE | 1 |
 | **T24** | FACTS AUDIT: Re-open /plan/facts.md, unverified tags for unvisited URLs, audit top 3 favorable | Counts printed: verified, unverified, corrected; audit log complete | DONE | 1 |
-| **T25** | DOCS + SAFETY: Update README, 7day_plan, risks.md; secrets scan; git instructions; readiness.md | Secrets scan passes cleanly; all documents synced with reality | TODO | 0 |
+| **T25** | DOCS + SAFETY: Update README, 7day_plan, risks.md; secrets scan; git instructions; readiness.md | Secrets scan passes cleanly; all documents synced with reality | DONE | 1 |

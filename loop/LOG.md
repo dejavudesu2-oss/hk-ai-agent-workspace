@@ -457,3 +457,20 @@
 - **Status**: PASS
 - **Next Task**: T25
 
+## [iter 12] T25
+- **Task**: T25 DOCS + SAFETY: Update README, 7day_plan, risks.md; secrets scan; git instructions; readiness.md
+- **Commands**:
+  - `node scripts/secrets_scan.js`: Exit 0 (Scanned 93 tracked files, verified .env ignored, 0 secrets leaked)
+  - `npm test`: 61/61 tests passed
+  - `npm run build`: Exit 0 (Next.js production build succeeded)
+- **Exit Code**: 0
+- **Reviewer Findings & Fixes**:
+  1. Updated `README.md` to match reality: 61 automated tests, Cost Model v2, multi-turn patch engine, IndexedDB persistence, storage shim, and GitHub Actions CI.
+  2. Aligned `plan/7day_plan.md` with true operating parameters: removed TVP subsidy claims, pinned gVisor systrap runtime, and integrated Stripe HK + FPS dual payment rails.
+  3. Hardened `plan/risks.md` with concrete mitigations for in-memory storage denial in sandboxed iframes, postMessage spoofing prevention, financial budget circuit breaker, and cross-border provider failover.
+  4. Executed `scripts/secrets_scan.js`: confirmed `.gitignore` contains `.env` patterns, `.env` is untracked by git, and scanned 93 files for DeepSeek/Stripe/AWS/Private key regexes with zero leaks.
+  5. Documented exact GitHub CLI (`gh repo create`) and Git push commands for private repository publishing.
+  6. Finalized `/plan/readiness.md` with honest verification states across all system components.
+- **Status**: PASS
+- **Next Task**: ALL TASKS COMPLETE (Loop Terminated)
+

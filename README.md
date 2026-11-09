@@ -12,31 +12,48 @@
    - **Bottom Panel**: Real-time terminal log viewer.
    - **Right Panel**: **Live Sandboxed Preview** with browser-level security isolation and error-watchdog self-healing.
 
-2. **Resilient Streaming FSM Parser**:
+2. **Resilient Streaming FSM Parser & Search/Replace Patch Engine**:
    - Parses streaming XML action blocks (`<sandbox_action type="file" path="...">`) on the fly.
-   - Handles network chunk fragmentation (down to 1-character packets), unquoted attributes, and automatically recovers when LLMs omit closing tags.
+   - **Search/Replace Patch Engine**: Multi-turn edits send file tree + file contexts and parse `<sandbox_action type="patch">` containing `<search>` and `<replace>`, enforcing a strict single-match invariant.
+   - Auto-unescapes `<\\/sandbox_action>` tags inside generated code via negative lookbehind `(?<!\\)<\/(sandbox_action|boltAction)`.
+   - Strips prose and markdown code fences around action tags, flags truncated streams (`isTruncated = true`), and sanitizes Windows drive letters and directory traversals (`../`).
 
-3. **Two-Tier Sandbox Architecture**:
+3. **Cost Guard & Financial Circuit Breaker**:
+   - Per-IP sliding-window rate limiting (30 requests / 10 minutes).
+   - Maximum user input size limit (12,000 characters).
+   - Output `max_tokens` cap (4,096 tokens).
+   - Global daily budget kill switch ($0.50 USD cap) tracking real DeepSeek usage tokens in-stream.
+   - Optional invite-code authentication gate on `/api/chat`.
+
+4. **Two-Tier Sandbox Security Architecture**:
    - **Tier 1 (Client-Side, 85% of workloads)**: Sandboxed iframe with in-browser bundling and Babel Standalone.
-     - **Security Model**: Strict `sandbox="allow-scripts allow-modals allow-forms"` (**strictly omitting `allow-same-origin`** to enforce an opaque `null` origin, blocking parent document/cookie tampering).
-     - **Content Security Policy (CSP)**: Injects strict meta CSP allowing trusted CDNs while blocking unauthorized scripts.
+     - **Security Invariant**: Strict `sandbox="allow-scripts allow-modals allow-forms"` (**strictly omitting `allow-same-origin`** to enforce an opaque `null` origin, blocking parent document/cookie tampering).
+     - **In-Memory Storage Shim**: Detects `DOMException: Access is denied for this document` on `localStorage`/`sessionStorage` and activates an in-memory key-value polyfill conforming to the `Storage` interface.
+     - **Source Validation**: Parent message receiver strictly verifies `event.source === iframeRef.current.contentWindow`.
+     - **Content Security Policy (CSP)**: Injects strict meta CSP allowing trusted CDNs (`unpkg.com`, `cdn.tailwindcss.com`) with `'unsafe-inline'` and `'unsafe-eval'` (required for Babel Standalone).
      - **Error Watchdog**: Listens for `window.onerror` in iframe via `postMessage` and triggers "一鍵 AI 修復" (One-Click AI Self-Healing).
-     - **License**: 100% open-source, eliminating StackBlitz WebContainer commercial licensing royalties and COOP/COEP headers.
    - **Tier 2 (Backend Container Sandbox)**:
-     - Google gVisor (`runsc:systrap`) user-space kernel interception.
+     - Google gVisor (`runsc:systrap`) user-space kernel interception without nested virtualization.
      - Cgroup resource quotas (256MB RAM, 0.5 vCPU, 64 PIDs, 15s timeout).
-     - Network egress allowlist restricting outbound calls strictly to approved package registries and CDNs.
+     - Strict network egress allowlist restricting outbound calls strictly to approved package registries and CDNs.
 
-4. **Multi-Provider LLM Engine with Zero-Cost Mock**:
+5. **Multi-Provider LLM Engine with Zero-Cost Mock & Failover**:
    - Controlled via `LLM_PROVIDER=mock` (default) or `LLM_PROVIDER=real`.
    - **Mock Provider**: Zero token consumption; streams realistic SSE chunks at ~60 tokens/sec cadence with complete runnable applications.
    - **Real Dual-Failover Provider**: Primary: DeepSeek API (Hong Kong edge direct, 12-20ms RTT); Backup: SiliconFlow / DashScope Qwen2.5-Coder.
+   - Automatic failover on HTTP 429, 503, slow stream timeout (15s timeout race), or mid-stream network drop without duplicating partial files.
 
-5. **Hardcore Hong Kong FinOps Model**:
+6. **Workspace Persistence**:
+   - Debounced autosave of Virtual File System and chat history to browser **IndexedDB**.
+   - Automatic workspace state restoration on page reload.
+   - Clean "Download ZIP" package export via JSZip with normalized forward-slash paths.
+
+7. **Hardcore Hong Kong FinOps Model (v2)**:
    - Fixed foreign exchange: **1 USD = 7.80 HKD** (HKMA Linked Peg).
-   - Single session cost: **$0.003636 USD (~ HK$ 0.0284)** using DeepSeek context caching.
-   - Fixed monthly VPS: **$24.00 USD (HK$ 187.20)** on AWS Lightsail HK (2C / 4GB RAM).
-   - **Breakeven Point**: Only **4 Pro subscribers** (HK$ 68/mo) required to achieve 100% operational breakeven!
+   - **Unit Cost**: $0.00056 USD (1st gen) to $0.00096 USD (1st gen + 3 edits).
+   - **Stripe HK Processing Fee**: 3.4% + HK$2.35 (6.86% effective fee on HK$68/mo subscription, netting HK$63.34 / $8.120 USD).
+   - **Fixed Monthly OpEx**: $50.00 USD (HK$ 390.00 / mo: Supabase Pro $25, AWS Lightsail HK VPS $24, Domain $1).
+   - **Breakeven Point**: Only **7 to 8 paying users** required to cover all fixed OpEx and subsidize up to 250 active free users!
 
 ---
 
@@ -65,6 +82,13 @@ npm run dev
 ```
 Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
+### 4. Build for Production (VPS Deployment)
+```bash
+npm run build
+npm run start
+```
+*Note*: Deployed as a dynamic Node.js server (`next start`) on VPS reverse-proxied behind Cloudflare.
+
 ---
 
 ## 🧪 Automated Test & Benchmark Commands
@@ -73,15 +97,43 @@ Every layer of this workspace includes automated acceptance tests:
 
 | Command | Purpose | Expected Result |
 | :--- | :--- | :--- |
-| `npm test` | Complete test suite (28 test cases) | Exits 0, all 28 tests pass |
+| `npm test` | Complete automated unit & integration test suite (61 tests) | Exits 0, all 61 tests pass |
+| `npm run test:chat` | Cross-platform Node fetch SSE stream test | Exits 0, verifies streaming chunks without curl.exe |
 | `npm run test:e2e` | End-to-End prompt-to-preview verification | Exits 0, validates English Todo App and HK Taxi Splitter |
-| `npm run test:chat` | SSE stream cadence & provider adapter switching | Exits 0, verifies realistic chunk streaming and env toggle |
 | `npm run test:vfs` | Virtual File System & FileTree dynamic population | Exits 0, verifies live tree building as stream arrives |
-| `node scripts/cost.js` | FinOps token calculator & unit economics | Exits 0, matches hand-computed baseline ($0.003636 USD) |
-| `node scripts/audit_facts.js` | Fact-check matrix verification | Exits 0, verifies 9 claims with URLs + 3 hostile re-checks |
+| `node scripts/cost_v2.js` | FinOps Cost Model v2 token calculator & unit economics | Exits 0, verifies 3 scenarios, Stripe HK, and breakeven |
+| `node scripts/audit_facts_v2.js` | Fact-check matrix verification (T24 audit) | Exits 0, reports 7 verified, 3 unverified, 5 corrected |
+| `node scripts/secrets_scan.js` | Pre-push credential & secrets scan | Exits 0, confirms .env gitignored and 0 secrets leaked |
 | `node bench/container_density.js` | gVisor capacity planning on $24 VPS | Exits 0, outputs tagged formulas with `[assumption]` |
 | `npm run bench:load` | In-process load testing & TTFT latency | Exits 0, measures throughput (15+ req/s, 50,000 blocks/s) |
-| `npm run build` | Production Next.js build | Exits 0, builds static & dynamic pages successfully |
+| `npm run build` | Production Next.js build | Exits 0, compiles dynamic routes `/api/chat` and `/api/sandbox` |
+
+---
+
+## 🔒 Security & Git Push Instructions
+
+### Pre-Push Security Verification
+Before pushing commits to GitHub, verify that no credentials or environment keys are staged:
+```bash
+node scripts/secrets_scan.js
+```
+
+### Exact Commands to Push to a Private GitHub Repository
+```bash
+# 1. Verify working directory is clean
+git status
+
+# 2. Ensure your local branch is named master (or main)
+git branch -M master
+
+# 3. Using GitHub CLI to create private repo and push:
+gh auth login
+gh repo create hk-ai-agent --private --source=. --remote=origin --push
+
+# Or manually using standard git remote:
+git remote add origin git@github.com:<your-username>/hk-ai-agent.git
+git push -u origin master
+```
 
 ---
 
@@ -89,33 +141,39 @@ Every layer of this workspace includes automated acceptance tests:
 
 ```
 hk-ai-agent-workspace/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                # GitHub Actions CI (build+test, infra smoke test)
 ├── app/                          # Next.js 14 App Router application
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── api/
-│   │   │   │   ├── chat/route.ts       # SSE streaming chat handler
+│   │   │   │   ├── chat/route.ts       # SSE streaming chat handler with Cost Guard
 │   │   │   │   └── sandbox/route.ts    # gVisor sandbox execution API
 │   │   │   ├── globals.css
 │   │   │   ├── layout.tsx
-│   │   │   └── page.tsx                # Main 3-pane agent IDE workspace
+│   │   │   └── page.tsx                # Main 3-pane agent IDE workspace with persistence
 │   │   ├── components/
 │   │   │   ├── ChatPanel.tsx           # Chat prompts & ZIP export
 │   │   │   ├── Editor.tsx              # Monaco editor & tab manager
 │   │   │   ├── FileTree.tsx            # Interactive VFS file explorer
-│   │   │   ├── LivePreview.tsx         # Sandboxed iframe with error watchdog
+│   │   │   ├── LivePreview.tsx         # Sandboxed iframe with error watchdog & source check
 │   │   │   └── Terminal.tsx            # Terminal log display
 │   │   └── lib/
-│   │       ├── docker-sandbox.ts       # gVisor runsc execution engine
-│   │       ├── llm-provider.ts         # Mock & Real LLM provider adapters
-│   │       ├── preview-generator.ts    # In-browser bundler, CSP & watchdog
-│   │       ├── streaming-parser.ts     # Resilient FSM streaming XML parser
+│   │       ├── cost-guard.ts           # Rate limiting, input/token caps, budget kill switch
+│   │       ├── docker-sandbox.ts       # gVisor runsc execution engine with path sanitization
+│   │       ├── llm-provider.ts         # Dual-upstream failover & Mock LLM provider
+│   │       ├── patch.ts                # Single-match invariant search/replace patch engine
+│   │       ├── persistence.ts          # IndexedDB workspace autosave and restore
+│   │       ├── preview-generator.ts    # In-browser bundler, storage shim, CSP & watchdog
+│   │       ├── streaming-parser.ts     # Resilient FSM streaming XML action & patch parser
 │   │       ├── templates.ts            # High-fidelity runnable starter templates
 │   │       └── vfs.ts                  # Virtual File System & path utilities
 ├── bench/                        # Performance and capacity benchmarks
 │   ├── container_density.js      # gVisor container capacity formula
 │   └── loadtest.js               # Throughput & latency load test
 ├── infra/
-│   └── setup.sh                  # One-command Ubuntu VPS bootstrap script
+│   └── setup.sh                  # One-command Ubuntu VPS bootstrap script (systrap)
 ├── loop/                         # Autonomous agent state & audit logs
 │   ├── DECISIONS.md              # Architectural decisions & reasons
 │   ├── LOG.md                    # Append-only iteration log
@@ -123,28 +181,23 @@ hk-ai-agent-workspace/
 │   └── STATE.md                  # Loop state & iteration checkpoints
 ├── plan/
 │   ├── 7day_plan.md              # 7-day launch roadmap & daily pass/fail tests
-│   ├── cost.md                   # FinOps unit economics & breakeven models
-│   ├── facts.md                  # 2026 authoritative fact check matrix
-│   ├── preview_security.md       # Iframe sandbox security & CSP specification
-│   └── risks.md                  # Top 10 engineering & commercial risks
+│   ├── audit.md                  # T14 engineering & architectural contradictions audit
+│   ├── ci.md                     # CI/CD pipeline & gVisor runner execution plan
+│   ├── cost_v2.md                # FinOps Cost Model v2 (3 scenarios, Stripe HK, breakeven)
+│   ├── facts.md                  # 2026 authoritative fact check matrix (T24 audited)
+│   ├── preview_security.md       # Iframe sandbox security & CSP specification (T21)
+│   ├── readiness.md              # Honest verification state tracking matrix
+│   └── risks.md                  # Top 10 engineering & commercial risks with mitigations
 ├── scripts/
-│   ├── audit_facts.js            # Facts audit verification test
-│   ├── audit_setup.js            # Infra bash script static audit
-│   ├── cost.js                   # FinOps token calculator
-│   ├── e2e_test.js               # End-to-end automated verification
-│   ├── test_chat_stream.js       # Streaming chat acceptance test
+│   ├── audit_facts_v2.js         # Facts audit verification test
+│   ├── cost_v2.js                # FinOps token calculator v2
+│   ├── record_real_fixtures.ts   # Live stream fixture recorder with budget cap
+│   ├── replay_fixtures.ts        # Fixture replayer & TTFT/compliance auditor
+│   ├── secrets_scan.js           # Pre-push credential & secrets scan
+│   ├── test_chat_stream.js       # Cross-platform Node fetch streaming acceptance test
 │   └── test_vfs_stream.js        # VFS streaming tree acceptance test
 ├── .env.example                  # Environment configuration template
 ├── .gitignore                    # Git ignore file (safely excludes .env)
 ├── package.json                  # Root npm workspace configuration
 └── tsconfig.json                 # Root TypeScript path configuration
 ```
-
----
-
-## 🔒 Security & Compliance Summary
-
-1. **Iframe Isolation**: No `allow-same-origin` ensures user-generated code runs in an opaque `null` origin, completely preventing sandbox escape or cookie theft.
-2. **Hong Kong Compliance (PCPD)**: Zero Data Retention (ZDR) on LLM provider calls guarantees user source code is never stored or used for model training.
-3. **No TVP Dependency**: Fully market-driven SaaS model (HK$ 68/mo); does not make false promises regarding the discontinued Technology Voucher Programme.
-4. **Stripe & FPS Dual-Rail Billing**: Direct payments via Stripe HK (credit card/Apple Pay) and local Hong Kong Faster Payment System (轉數快 FPS) QR codes.

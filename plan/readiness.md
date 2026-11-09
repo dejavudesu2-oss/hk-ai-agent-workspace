@@ -16,6 +16,7 @@
 | **CI / CD Pipeline** | ✅ YES (Job 1: npm test + build verified) | N/A | ⚠️ Job 2 UNTESTED-locally (Marked in ci.yml; exact steps in plan/ci.md) | GitHub runner network limits, gVisor systrap apt mirror availability |
 | **FinOps Cost Model v2** | ✅ YES (scripts/cost_v2.js verified, 3 scenarios, Stripe HK, free abuse & breakeven modeled) | ⚠️ BLOCKED [needs key] (Grounded on T16 measured fixtures + DeepSeek peak pricing) | N/A | High-volume production token variance under unconstrained user prompts |
 | **Market & Regulatory Facts** | ✅ YES (7 verified with live 200 URLs, 3 unverified due to 403/404, 5 corrections documented) | N/A | N/A | Future regulatory changes to HK cross-border API access or Stripe payment rules |
+| **Docs & Pre-Push Security** | ✅ YES (README, 7day_plan, risks.md updated; secrets scan passed 0 leaks, .env gitignored) | N/A | N/A | Untracked temporary files during developer manual editing |
 
 ---
-*Last updated: Iteration 11 (T24 Facts Audit Complete - 7 verified, 3 unverified, 5 corrections versus early drafts, 3 favorable claims re-checked)*
+*Last updated: Iteration 12 (T25 Docs + Safety Complete - All tasks T14-T25 executed and verified; ready for loop completion)*
